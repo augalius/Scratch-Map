@@ -1,4 +1,4 @@
-package com.auggie.scratchmap.ui.theme
+package com.auggie.scratch_map_app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

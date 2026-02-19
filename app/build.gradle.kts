@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.auggie.scratchmap"
+    namespace = "com.auggie.scratch_map_app"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.auggie.scratchmap"
+        applicationId = "com.auggie.scratch_map_app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

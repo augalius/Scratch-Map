@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ScratchMap"
+rootProject.name = "scratch-map-app"
 include(":app")
