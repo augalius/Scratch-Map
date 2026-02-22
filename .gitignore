@@ -1,6 +1,13 @@
 *.iml
 .gradle
-/.idea/caches
-/.idea/workspace.xml
-/src
+.idea/
+.vscode/
+.claude/
+.kotlin/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
 local.properties
+*.stackdump
