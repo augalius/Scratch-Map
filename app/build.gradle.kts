@@ -69,6 +69,9 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(libs.coroutines.play.services)
+    implementation(libs.play.services.location)
+    implementation(libs.timber)
 
     testImplementation(libs.junit)
 
