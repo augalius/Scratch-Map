@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.domain.location.LocationClient
 import com.auggie.scratch_map_app.util.TileCalculator
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,7 +24,8 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * Foreground service that continuously tracks the user's GPS position.
+ * Foreground service that continuously tracks the user's GPS position and feeds
+ * each location fix through [RevealTilesUseCase] to scratch the map.
  */
 @AndroidEntryPoint
 class LocationTrackingService : LifecycleService() {
@@ -31,10 +33,14 @@ class LocationTrackingService : LifecycleService() {
     lateinit var locationClient: LocationClient
 
     @Inject
+    lateinit var revealTilesUseCase: RevealTilesUseCase
+
+    @Inject
     lateinit var statusTracker: ServiceStatusTracker
 
     private var locationJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private var totalNewTiles = 0
     private var lastLocation: UserLocation? = null
 
     companion object {
@@ -85,6 +91,7 @@ class LocationTrackingService : LifecycleService() {
         }
 
         isRunning = true
+        totalNewTiles = 0
         lastLocation = null
         statusTracker.onTrackingStarted()
         startForeground(NOTIFICATION_ID, createNotification("Starting..."))
@@ -113,6 +120,13 @@ class LocationTrackingService : LifecycleService() {
 
     private suspend fun processLocation(location: UserLocation) {
         try {
+            val newTiles = revealTilesUseCase(location)
+            totalNewTiles += newTiles
+
+            if (newTiles > 0) {
+                Timber.d("Revealed %d tiles (session total: %d", newTiles, totalNewTiles)
+            }
+
             // Update the notification with live stats
             lastLocation?.let { prev ->
                 val distance = TileCalculator.haversineDistance(
