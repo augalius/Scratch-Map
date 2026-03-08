@@ -12,6 +12,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.location.LocationClient
+import com.auggie.scratch_map_app.util.TileCalculator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
@@ -28,6 +29,9 @@ import javax.inject.Inject
 class LocationTrackingService : LifecycleService() {
     @Inject
     lateinit var locationClient: LocationClient
+
+    @Inject
+    lateinit var statusTracker: ServiceStatusTracker
 
     private var locationJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -82,6 +86,7 @@ class LocationTrackingService : LifecycleService() {
 
         isRunning = true
         lastLocation = null
+        statusTracker.onTrackingStarted()
         startForeground(NOTIFICATION_ID, createNotification("Starting..."))
         acquireWakeLock()
 
@@ -98,6 +103,7 @@ class LocationTrackingService : LifecycleService() {
 
     private fun stopTracking() {
         isRunning = false
+        statusTracker.onTrackingStopped()
         locationJob?.cancel()
         locationJob = null
         releaseWakeLock()
@@ -108,6 +114,15 @@ class LocationTrackingService : LifecycleService() {
     private suspend fun processLocation(location: UserLocation) {
         try {
             // Update the notification with live stats
+            lastLocation?.let { prev ->
+                val distance = TileCalculator.haversineDistance(
+                    prev.latitude, prev.longitude,
+                    location.latitude, location.longitude
+                )
+                if (distance in 1.0..500.0) {
+                    statusTracker.onDistanceUpdated(distance)
+                }
+            }
             lastLocation = location
             updateNotification(location)
         } catch (e: Exception) {
@@ -118,12 +133,12 @@ class LocationTrackingService : LifecycleService() {
     private fun handleLocationError(error: Throwable) {
         when (error) {
             is LocationClient.PermissionMissingException -> {
-                Timber.w("Location permission revoked")
+                statusTracker.onError("Location permission revoked")
                 stopTracking()
             }
 
             is LocationClient.GpsDisabledException -> {
-                Timber.w("GPS disabled")
+                statusTracker.onError("GPS disabled - enable location services")
             }
 
             else -> {
@@ -172,10 +187,11 @@ class LocationTrackingService : LifecycleService() {
 
     private fun updateNotification(location: UserLocation) {
         val speedKmh = ((location.speed ?: 0f) * 3.6f)
+        val distKm = statusTracker.sessionDistanceMeters.value / 1000.0
         val text = if (speedKmh > 1f) {
-            "%.1f km/h".format(speedKmh)
+            "%.1f km/h \u00b7 %.1f km".format(speedKmh, distKm)
         } else {
-            "Tracking your exploration"
+            "%.1f km walked".format(distKm)
         }
         updateNotificationText(text)
     }
