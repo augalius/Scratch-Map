@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.secrets.gradle.plugin)
 }
 
 android {
@@ -44,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -73,6 +75,7 @@ dependencies {
     implementation(libs.coroutines.play.services)
     implementation(libs.play.services.location)
     implementation(libs.timber)
+    implementation(libs.mapbox.maps)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
@@ -81,4 +84,9 @@ dependencies {
     androidTestImplementation(libs.junit.ext)
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.coroutines.test)
+}
+
+secrets {
+    propertiesFileName = "local.properties"
+    ignoreList.add("MAPBOX_DOWNLOADS_TOKEN")
 }
