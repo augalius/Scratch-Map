@@ -5,12 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.auggie.scratch_map_app.ui.home.HomeScreen
+import com.auggie.scratch_map_app.ui.map.MapScreen
 
 @Composable
 fun ScratchMapNavHost(
     navController: NavHostController,
-    startDestination: String = Screen.Home.route,
+    startDestination: String = Screen.Map.route,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -18,6 +18,6 @@ fun ScratchMapNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable(Screen.Home.route) { HomeScreen() }
+        composable(Screen.Map.route) { MapScreen() }
     }
 }
