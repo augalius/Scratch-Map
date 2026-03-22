@@ -24,7 +24,6 @@ import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.animation.easeTo
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.locationcomponent.location
 
 @Composable
 fun MapScreen(
@@ -99,6 +98,8 @@ fun MapScreen(
             AndroidView(
                 factory = { context ->
                     MapView(context).apply {
+                        alpha = 0f
+
                         val loc = uiState.currentLocation
                         mapboxMap.setCamera(
                             CameraOptions.Builder()
@@ -116,7 +117,9 @@ fun MapScreen(
                             viewModel.saveZoom(mapboxMap.cameraState.zoom)
                         }
 
-                        mapboxMap.loadStyle(if (isDark) Style.DARK else Style.LIGHT)
+                        mapboxMap.loadStyle(if (isDark) Style.DARK else Style.LIGHT) {
+                            fadeInWhenStyled()
+                        }
 
                         // Stop following when the user manually pans or zooms
                         gestures.addOnMoveListener(object :
@@ -140,7 +143,7 @@ fun MapScreen(
                             override fun onScaleEnd(detector: com.mapbox.android.gestures.StandardScaleGestureDetector) {}
                         })
 
-                        location.enabled = hasPermissions
+                        applyScratchMapChrome(locationEnabled = hasPermissions)
 
                         mapViewRef = this
                     }

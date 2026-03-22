@@ -10,6 +10,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.auggie.scratch_map_app.R
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.domain.location.LocationClient
@@ -188,9 +189,9 @@ class LocationTrackingService : LifecycleService() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Exploring the map")
             .setContentText(statusText)
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setSmallIcon(R.drawable.ic_explore)
             .setContentIntent(pendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
+            .addAction(R.drawable.ic_explore, "Stop", stopIntent)
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)
