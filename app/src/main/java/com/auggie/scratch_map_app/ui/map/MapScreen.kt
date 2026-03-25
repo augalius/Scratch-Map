@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.auggie.scratch_map_app.ui.theme.FogColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auggie.scratch_map_app.ui.components.LocationPermissionHandler
+import com.auggie.scratch_map_app.ui.map.fog.FogLayerManager
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
@@ -53,6 +55,14 @@ fun MapScreen(
     }
 
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    var mapStyleRef by remember { mutableStateOf<Style?>(null) }
+
+    val revealedTiles = uiState.revealedTiles
+
+    LaunchedEffect(revealedTiles, mapStyleRef) {
+        val style = mapStyleRef ?: return@LaunchedEffect
+        FogLayerManager.applyFogLayer(style, FogLayerManager.buildFogGeoJson(revealedTiles))
+    }
 
     // One-shot center + zoom when the button is pressed
     LaunchedEffect(uiState.shouldCenterOnUser, uiState.currentLocation) {
@@ -81,7 +91,9 @@ fun MapScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FogColor)
     ) {
         if (!uiState.hasPermissions) {
             Box(
@@ -117,7 +129,8 @@ fun MapScreen(
                             viewModel.saveZoom(mapboxMap.cameraState.zoom)
                         }
 
-                        mapboxMap.loadStyle(if (isDark) Style.DARK else Style.LIGHT) {
+                        mapboxMap.loadStyle(if (isDark) Style.DARK else Style.LIGHT) { style ->
+                            mapStyleRef = style
                             fadeInWhenStyled()
                         }
 

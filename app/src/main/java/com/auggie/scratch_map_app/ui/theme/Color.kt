@@ -1,6 +1,17 @@
 package com.auggie.scratch_map_app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+
+/**
+ * `#RRGGBB` form, for Mapbox style JSON and paint properties — they cannot take a Compose [Color],
+ * so these two helpers keep the palette defined once here instead of duplicated as string literals.
+ */
+fun Color.toHexString(): String = String.format("#%06X", 0xFFFFFF and toArgb())
+
+/** `rgba(r, g, b, a)` form, for Mapbox paint properties that need transparency. */
+fun Color.toRgbaString(alpha: Double): String =
+    "rgba(${(red * 255).toInt()}, ${(green * 255).toInt()}, ${(blue * 255).toInt()}, $alpha)"
 
 val Primary = Color(0xFF2563EB)
 val OnPrimary = Color.White
@@ -19,3 +30,4 @@ val LightOnBackground = Color(0xFF0F172A)
 val LightOnSurface = Color(0xFF1E293B)
 val Error = Color(0xFFEF4444)
 val OnError = Color.White
+val FogColor = Color(0xFF1A1A2E)
