@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auggie.scratch_map_app.ui.components.LocationPermissionHandler
+import com.auggie.scratch_map_app.ui.map.debug.DebugTileOverlay
 import com.auggie.scratch_map_app.ui.map.fog.FogLayerManager
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
@@ -62,6 +63,7 @@ fun MapScreen(
     LaunchedEffect(revealedTiles, mapStyleRef) {
         val style = mapStyleRef ?: return@LaunchedEffect
         FogLayerManager.applyFogLayer(style, FogLayerManager.buildFogGeoJson(revealedTiles))
+        if (SHOW_DEBUG_TILES) DebugTileOverlay.update(style, revealedTiles)
     }
 
     // One-shot center + zoom when the button is pressed
@@ -200,3 +202,6 @@ fun MapScreen(
         )
     }
 }
+
+/** Draw raw tile outlines on top of the fog while tuning the contour tracer. */
+private const val SHOW_DEBUG_TILES = true
