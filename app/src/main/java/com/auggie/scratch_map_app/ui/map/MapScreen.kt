@@ -60,10 +60,17 @@ fun MapScreen(
 
     val revealedTiles = uiState.revealedTiles
 
-    LaunchedEffect(revealedTiles, mapStyleRef) {
-        val style = mapStyleRef ?: return@LaunchedEffect
-        FogLayerManager.applyFogLayer(style, FogLayerManager.buildFogGeoJson(revealedTiles))
-        if (SHOW_DEBUG_TILES) DebugTileOverlay.update(style, revealedTiles)
+    var fogStyleJson by remember { mutableStateOf<String?>(null) }
+    var initialStyleLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(revealedTiles, isDark, initialStyleLoaded) {
+        if (!initialStyleLoaded) {
+            fogStyleJson = FogLayerManager.buildStyleJson(revealedTiles, isDark)
+        } else {
+            val style = mapStyleRef ?: return@LaunchedEffect
+            FogLayerManager.applyFogLayer(style, FogLayerManager.buildFogGeoJson(revealedTiles))
+            if (SHOW_DEBUG_TILES) DebugTileOverlay.update(style, revealedTiles)
+        }
     }
 
     // One-shot center + zoom when the button is pressed
@@ -106,7 +113,8 @@ fun MapScreen(
             ) {
                 LocationPermissionHandler(onAllGranted = { viewModel.onPermissionsGranted() })
             }
-        } else {
+        } else if (fogStyleJson != null) {
+            val styleJson = fogStyleJson!!
             val hasPermissions = uiState.hasPermissions
 
             AndroidView(
@@ -131,8 +139,10 @@ fun MapScreen(
                             viewModel.saveZoom(mapboxMap.cameraState.zoom)
                         }
 
-                        mapboxMap.loadStyle(if (isDark) Style.DARK else Style.LIGHT) { style ->
+                        @Suppress("DEPRECATION")
+                        mapboxMap.loadStyleJson(styleJson) { style ->
                             mapStyleRef = style
+                            initialStyleLoaded = true
                             fadeInWhenStyled()
                         }
 

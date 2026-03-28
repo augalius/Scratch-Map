@@ -22,7 +22,8 @@ import kotlinx.coroutines.withContext
  * Builds and updates the fog-of-war overlay.
  *
  * The fog is one polygon covering the whole world, with a hole punched through it for every
- * contiguous revealed area. Contour tracing lives in [TileContourTracer].
+ * contiguous revealed area. Contour tracing lives in [TileContourTracer]; the style document
+ * lives in [MapStyleBuilder].
  */
 object FogLayerManager {
 
@@ -42,6 +43,19 @@ object FogLayerManager {
         Point.fromLngLat(-180.0, 85.06),
         Point.fromLngLat(-180.0, -85.06)
     )
+
+    suspend fun buildStyleJson(
+        tiles: List<ScratchTile>,
+        isDark: Boolean = false
+    ): String = withContext(Dispatchers.Default) {
+        MapStyleBuilder.build(
+            fogJson = buildFogGeoJson(tiles).toJson(),
+            fogSourceId = SOURCE_ID,
+            fogLayerId = LAYER_ID,
+            fogColor = FOG_COLOR,
+            isDark = isDark
+        )
+    }
 
     suspend fun buildFogGeoJson(tiles: List<ScratchTile>): Feature =
         withContext(Dispatchers.Default) {
