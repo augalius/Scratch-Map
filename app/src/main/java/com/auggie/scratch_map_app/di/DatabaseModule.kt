@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.auggie.scratch_map_app.data.local.ScratchMapDatabase
 import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
+import com.auggie.scratch_map_app.data.local.dao.WaypointDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,4 +30,9 @@ object DatabaseModule {
     @Singleton
     fun provideScratchTileDao(database: ScratchMapDatabase): ScratchTileDao =
         database.scratchTileDao()
+
+    @Provides
+    @Singleton
+    fun provideWaypointDao(database: ScratchMapDatabase): WaypointDao =
+        database.waypointDao()
 }
