@@ -8,7 +8,10 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "waypoints",
     indices = [
-        Index(value = ["latitude", "longitude"])
+        Index(value = ["string_id"], unique = true),
+        Index(value = ["latitude", "longitude"]),
+        Index(value = ["category"]),
+        Index(value = ["is_unlocked"])
     ]
 )
 data class WaypointEntity(
@@ -23,8 +26,11 @@ data class WaypointEntity(
     val category: String = "OTHER",
     @ColumnInfo(name = "unlock_radius_meters")
     val unlockRadiusMeters: Int = 50,
+    val icon: String = "",
     @ColumnInfo(name = "is_unlocked")
     val isUnlocked: Boolean = false,
     @ColumnInfo(name = "unlocked_at_millis")
-    val unlockedAtMillis: Long? = null
+    val unlockedAtMillis: Long? = null,
+    @ColumnInfo(name = "created_at_millis")
+    val createdAtMillis: Long = 0
 )

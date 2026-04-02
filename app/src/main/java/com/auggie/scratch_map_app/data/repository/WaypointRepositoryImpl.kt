@@ -29,6 +29,9 @@ class WaypointRepositoryImpl @Inject constructor(
         dao.getLockedWaypointsInBounds(minLat, maxLat, minLng, maxLng)
             .map(WaypointMapper::entityToDomain)
 
+    override suspend fun getByStringId(stringId: String): Waypoint? =
+        dao.getByStringId(stringId)?.let(WaypointMapper::entityToDomain)
+
     override suspend fun insertAll(waypoints: List<Waypoint>) =
         dao.insertAll(waypoints.map(WaypointMapper::domainToEntity))
 

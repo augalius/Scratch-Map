@@ -13,6 +13,7 @@ interface WaypointRepository {
         minLng: Double,
         maxLng: Double
     ): List<Waypoint>
+    suspend fun getByStringId(stringId: String): Waypoint?
 
     suspend fun insertAll(waypoints: List<Waypoint>)
     suspend fun markUnlocked(id: Long)

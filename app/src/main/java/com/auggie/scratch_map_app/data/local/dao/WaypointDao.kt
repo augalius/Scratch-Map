@@ -33,6 +33,9 @@ interface WaypointDao {
         maxLng: Double
     ): List<WaypointEntity>
 
+    @Query("SELECT * FROM waypoints WHERE string_id = :stringId LIMIT 1")
+    suspend fun getByStringId(stringId: String): WaypointEntity?
+
     @Query("SELECT COUNT(*) FROM waypoints WHERE is_unlocked = 1")
     fun observeUnlockedCount(): Flow<Int>
 
