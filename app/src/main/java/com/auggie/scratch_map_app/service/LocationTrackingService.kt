@@ -6,12 +6,17 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.R
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.usecase.CheckWaypointProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.domain.location.LocationClient
 import com.auggie.scratch_map_app.util.TileCalculator
@@ -35,6 +40,9 @@ class LocationTrackingService : LifecycleService() {
 
     @Inject
     lateinit var revealTilesUseCase: RevealTilesUseCase
+
+    @Inject
+    lateinit var checkWaypointProximityUseCase: CheckWaypointProximityUseCase
 
     @Inject
     lateinit var statusTracker: ServiceStatusTracker
@@ -128,6 +136,16 @@ class LocationTrackingService : LifecycleService() {
                 Timber.d("Revealed %d tiles (session total: %d", newTiles, totalNewTiles)
             }
 
+            // Check waypoint proximity and unlock nearby waypoints
+            val unlocked = checkWaypointProximityUseCase(location)
+            for (waypoint in unlocked) {
+                statusTracker.onWaypointUnlocked(waypoint)
+            }
+
+            if (unlocked.isNotEmpty()) {
+                vibrate()
+            }
+
             // Update the notification with live stats
             lastLocation?.let { prev ->
                 val distance = TileCalculator.haversineDistance(
@@ -215,6 +233,24 @@ class LocationTrackingService : LifecycleService() {
         val notification = createNotification(text)
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun vibrate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            manager.defaultVibrator.vibrate(
+                VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    300,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+        }
     }
 
     private fun acquireWakeLock() {

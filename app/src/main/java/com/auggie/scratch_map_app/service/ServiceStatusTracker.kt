@@ -1,5 +1,6 @@
 package com.auggie.scratch_map_app.service
 
+import com.auggie.scratch_map_app.domain.model.Waypoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,9 @@ class ServiceStatusTracker @Inject constructor() {
     private val _lastError = MutableStateFlow<String?>(null)
     val lastError: StateFlow<String?> = _lastError.asStateFlow()
 
+    private val _lastUnlockedWaypoint = MutableStateFlow<Waypoint?>(null)
+    val lastUnlockedWaypoint: StateFlow<Waypoint?> = _lastUnlockedWaypoint.asStateFlow()
+
     fun onTrackingStarted() {
         _isTracking.value = true
         _sessionDistanceMeters.value = 0.0
@@ -43,5 +47,13 @@ class ServiceStatusTracker @Inject constructor() {
 
     fun clearError() {
         _lastError.value = null
+    }
+
+    fun onWaypointUnlocked(waypoint: Waypoint) {
+        _lastUnlockedWaypoint.value = waypoint
+    }
+
+    fun clearLastUnlockedWaypoint() {
+        _lastUnlockedWaypoint.value = null
     }
 }
