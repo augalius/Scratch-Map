@@ -1,7 +1,9 @@
 package com.auggie.scratch_map_app.di
 
 import com.auggie.scratch_map_app.data.repository.ScratchTileRepositoryImpl
+import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.WaypointRepositoryImpl
+import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import dagger.Binds
@@ -18,4 +20,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindWaypointRepository(impl: WaypointRepositoryImpl): WaypointRepository
+
+    @Binds @Singleton
+    abstract fun bindRegionRepository(impl: RegionRepositoryImpl): RegionRepository
 }
