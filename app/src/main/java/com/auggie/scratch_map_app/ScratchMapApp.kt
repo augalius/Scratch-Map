@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app
 
 import android.app.Application
 import com.auggie.scratch_map_app.di.ApplicationScope
+import com.auggie.scratch_map_app.domain.usecase.SeedRegionsUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedWaypointsUseCase
 import com.mapbox.common.MapboxOptions
 import dagger.hilt.android.HiltAndroidApp
@@ -17,6 +18,9 @@ class ScratchMapApp : Application() {
     lateinit var seedWaypointsUseCase: SeedWaypointsUseCase
 
     @Inject
+    lateinit var seedRegionsUseCase: SeedRegionsUseCase
+
+    @Inject
     @ApplicationScope
     lateinit var appScope: CoroutineScope
 
@@ -25,6 +29,9 @@ class ScratchMapApp : Application() {
         MapboxOptions.accessToken = BuildConfig.MAPBOX_ACCESS_TOKEN
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
-        appScope.launch { seedWaypointsUseCase() }
+        appScope.launch {
+            seedWaypointsUseCase()
+            seedRegionsUseCase()
+        }
     }
 }
