@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.auggie.scratch_map_app.domain.model.ScratchTile
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.model.Waypoint
+import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.domain.location.LocationClient
@@ -20,12 +22,15 @@ import timber.log.Timber
 import javax.inject.Inject
 
 data class MapUiState(
+    val waypoints: List<Waypoint> = emptyList(),
     val revealedTiles: List<ScratchTile> = emptyList(),
     val currentLocation: UserLocation? = null,
     val hasPermissions: Boolean = false,
     val errorMessage: String? = null,
     val shouldCenterOnUser: Boolean = false,
-    val isFollowing: Boolean = false
+    val isFollowing: Boolean = false,
+    val lastUnlockedWaypoint: Waypoint? = null,
+    val selectedWaypoint: Waypoint? = null
 )
 
 @HiltViewModel
@@ -34,7 +39,8 @@ class MapViewModel @Inject constructor(
     private val tileRepository: ScratchTileRepository,
     private val locationClient: LocationClient,
     private val serviceStatusTracker: ServiceStatusTracker,
-    private val revealTilesUseCase: RevealTilesUseCase
+    private val revealTilesUseCase: RevealTilesUseCase,
+    private val waypointRepository: WaypointRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -52,6 +58,8 @@ class MapViewModel @Inject constructor(
 
     init {
         observeAllRevealedTiles()
+        observeWaypoints()
+        observeWaypointUnlocks()
         observeServiceStatus()
         checkPermissions()
     }
@@ -68,13 +76,37 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    private fun observeWaypoints() {
+        viewModelScope.launch {
+            waypointRepository.observeAll().collect { waypoints ->
+                _uiState.update { it.copy(waypoints = waypoints) }
+            }
+        }
+    }
 
 
 
 
+    private fun observeWaypointUnlocks() {
+        viewModelScope.launch {
+            serviceStatusTracker.lastUnlockedWaypoint.filterNotNull().collect { waypoint ->
+                _uiState.update { it.copy(lastUnlockedWaypoint = waypoint) }
+            }
+        }
+    }
 
+    fun clearUnlockedWaypoint() {
+        _uiState.update { it.copy(lastUnlockedWaypoint = null) }
+        serviceStatusTracker.clearLastUnlockedWaypoint()
+    }
 
+    fun showWaypointPopup(waypoint: Waypoint) {
+        _uiState.update { it.copy(selectedWaypoint = waypoint) }
+    }
 
+    fun clearSelectedWaypoint() {
+        _uiState.update { it.copy(selectedWaypoint = null) }
+    }
 
     private fun observeServiceStatus() {
         viewModelScope.launch {

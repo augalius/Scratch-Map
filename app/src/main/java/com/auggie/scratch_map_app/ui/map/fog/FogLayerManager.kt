@@ -1,11 +1,14 @@
 package com.auggie.scratch_map_app.ui.map.fog
 
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.Waypoint
+import com.auggie.scratch_map_app.ui.map.colorHex
 import com.auggie.scratch_map_app.ui.theme.FogColor
 import com.auggie.scratch_map_app.ui.theme.toRgbaString
 import com.auggie.scratch_map_app.util.TileCalculator
 import com.auggie.scratch_map_app.util.TileContourTracer
 import com.mapbox.geojson.Feature
+import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
 import com.mapbox.geojson.Polygon
 import com.mapbox.maps.Style
@@ -17,9 +20,10 @@ import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.sources.getSourceAs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
- * Builds and updates the fog-of-war overlay.
+ * Builds and updates the fog-of-war overlay and its marker sources.
  *
  * The fog is one polygon covering the whole world, with a hole punched through it for every
  * contiguous revealed area. Contour tracing lives in [TileContourTracer]; the style document
@@ -46,10 +50,12 @@ object FogLayerManager {
 
     suspend fun buildStyleJson(
         tiles: List<ScratchTile>,
-        isDark: Boolean = false
+        isDark: Boolean = false,
+        waypoints: List<Waypoint> = emptyList()
     ): String = withContext(Dispatchers.Default) {
         MapStyleBuilder.build(
             fogJson = buildFogGeoJson(tiles).toJson(),
+            waypointJson = FeatureCollection.fromFeatures(buildWaypointFeatures(waypoints)).toJson(),
             fogSourceId = SOURCE_ID,
             fogLayerId = LAYER_ID,
             fogColor = FOG_COLOR,
@@ -89,4 +95,29 @@ object FogLayerManager {
             })
         }
     }
+
+    fun updateWaypoints(style: Style, waypoints: List<Waypoint>) {
+        updateSource(style, "waypoint-source", buildWaypointFeatures(waypoints))
+    }
+
+
+    private fun updateSource(style: Style, sourceId: String, features: List<Feature>) {
+        try {
+            style.getSourceAs<GeoJsonSource>(sourceId)
+                ?.featureCollection(FeatureCollection.fromFeatures(features))
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to update source %s", sourceId)
+        }
+    }
+
+    private fun buildWaypointFeatures(waypoints: List<Waypoint>): List<Feature> =
+        waypoints.map { wp ->
+            Feature.fromGeometry(Point.fromLngLat(wp.longitude, wp.latitude)).apply {
+                addStringProperty("name", wp.name)
+                addStringProperty("category", wp.category.name)
+                addBooleanProperty("unlocked", wp.isUnlocked)
+                addStringProperty("color", wp.category.colorHex)
+            }
+        }
+
 }

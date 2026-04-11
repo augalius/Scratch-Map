@@ -26,6 +26,8 @@ data class WaypointEntity(
     val category: String = "OTHER",
     @ColumnInfo(name = "unlock_radius_meters")
     val unlockRadiusMeters: Int = 50,
+    @ColumnInfo(name = "image_url")
+    val imageUrl: String = "",
     val icon: String = "",
     @ColumnInfo(name = "is_unlocked")
     val isUnlocked: Boolean = false,

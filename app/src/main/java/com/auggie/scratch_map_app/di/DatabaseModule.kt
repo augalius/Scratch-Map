@@ -25,7 +25,8 @@ object DatabaseModule {
         return Room.databaseBuilder(context, ScratchMapDatabase::class.java, "scratchmap.db")
             .addMigrations(
                 ScratchMapDatabase.MIGRATION_2_3,
-                ScratchMapDatabase.MIGRATION_3_4
+                ScratchMapDatabase.MIGRATION_3_4,
+                ScratchMapDatabase.MIGRATION_4_5
             )
             // No 1→2 migration exists, so v1 installs are recreated from scratch. Everything
             // from v2 onward migrates in place via the chain above.

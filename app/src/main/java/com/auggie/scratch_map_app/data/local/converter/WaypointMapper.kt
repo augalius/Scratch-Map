@@ -19,6 +19,7 @@ object WaypointMapper {
             WaypointCategory.OTHER
         },
         unlockRadiusMeters = entity.unlockRadiusMeters,
+        imageUrl = entity.imageUrl,
         isUnlocked = entity.isUnlocked
     )
 
@@ -31,6 +32,7 @@ object WaypointMapper {
         description = domain.description,
         category = domain.category.name,
         unlockRadiusMeters = domain.unlockRadiusMeters,
+        imageUrl = domain.imageUrl,
         isUnlocked = domain.isUnlocked
     )
 }

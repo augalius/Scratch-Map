@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.coroutines.play.services)
     implementation(libs.play.services.location)
     implementation(libs.timber)
+    implementation(libs.coil.compose)
     implementation(libs.mapbox.maps)
 
     testImplementation(libs.junit)

@@ -53,6 +53,7 @@ internal object MapStyleBuilder {
 
     fun build(
         fogJson: String,
+        waypointJson: String,
         fogSourceId: String,
         fogLayerId: String,
         fogColor: String,
@@ -72,6 +73,10 @@ internal object MapStyleBuilder {
             "$fogSourceId": {
               "type": "geojson",
               "data": $fogJson
+            },
+            "waypoint-source": {
+              "type": "geojson",
+              "data": $waypointJson
             }
           },
           "layers": [
@@ -173,6 +178,49 @@ internal object MapStyleBuilder {
               "type": "fill",
               "source": "$fogSourceId",
               "paint": { "fill-color": "$fogColor", "fill-antialias": true }
+            },
+            {
+              "id": "waypoint-unlocked",
+              "type": "symbol",
+              "source": "waypoint-source",
+              "filter": ["==", ["get", "unlocked"], true],
+              "minzoom": 11,
+              "layout": {
+                "icon-image": ["concat", "waypoint-", ["get", "category"]],
+                "icon-size": 0.8,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "symbol-avoid-edges": false,
+                "text-field": ["get", "name"],
+                "text-font": ["DIN Pro Medium", "Arial Unicode MS Regular"],
+                "text-size": 11,
+                "text-offset": [0, 0.3],
+                "text-anchor": "top",
+                "text-allow-overlap": false,
+                "text-ignore-placement": false
+              },
+              "paint": {
+                "text-color": ["get", "color"],
+                "text-halo-color": "${p.labelHalo}",
+                "text-halo-width": 1,
+                "text-opacity": ["interpolate", ["linear"], ["zoom"], 15.5, 0, 16, 1]
+              }
+            },
+            {
+              "id": "waypoint-locked",
+              "type": "symbol",
+              "source": "waypoint-source",
+              "filter": ["==", ["get", "unlocked"], false],
+              "minzoom": 11,
+              "layout": {
+                "icon-image": ["concat", "waypoint-locked-", ["get", "category"]],
+                "icon-size": 1.0,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "symbol-avoid-edges": false
+              }
             }
           ]
         }
