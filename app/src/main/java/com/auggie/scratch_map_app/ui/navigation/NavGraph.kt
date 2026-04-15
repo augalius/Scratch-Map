@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.auggie.scratch_map_app.ui.map.MapScreen
+import com.auggie.scratch_map_app.ui.stats.StatsScreen
 
 @Composable
 fun ScratchMapNavHost(
@@ -19,5 +20,8 @@ fun ScratchMapNavHost(
         modifier = modifier
     ) {
         composable(Screen.Map.route) { MapScreen() }
+        composable(Screen.Stats.route) {
+            StatsScreen(onRegionClick = { })
+        }
     }
 }
