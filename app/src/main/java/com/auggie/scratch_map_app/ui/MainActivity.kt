@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
@@ -59,7 +61,21 @@ private fun ScratchMapMainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in listOf(
-        Screen.Map.route, Screen.Stats.route
+        Screen.Map.route, Screen.Stats.route, Screen.RegionDetail.route
+    )
+
+    var bottomBarScrollVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != Screen.RegionDetail.route) {
+            bottomBarScrollVisible = true
+        }
+    }
+
+    val navBarSlide by animateDpAsState(
+        targetValue = if (showBottomBar && bottomBarScrollVisible) 0.dp else 120.dp,
+        animationSpec = tween(durationMillis = 250),
+        label = "navBarSlide"
     )
 
     Scaffold(contentWindowInsets = WindowInsets(0)) { _ ->
@@ -70,13 +86,16 @@ private fun ScratchMapMainScreen() {
         ) {
             ScratchMapNavHost(
                 navController = navController,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                onBottomBarVisibilityChanged = { bottomBarScrollVisible = it }
             )
 
             if (showBottomBar) {
                 val currentDest = navBackStackEntry?.destination
                 NavigationBar(
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = navBarSlide)
                 ) {
                     items.forEach { item ->
                         val isSelected =
