@@ -4,9 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.auggie.scratch_map_app.data.local.dao.AchievementDefinitionDao
 import com.auggie.scratch_map_app.data.local.dao.RegionDao
 import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
 import com.auggie.scratch_map_app.data.local.dao.WaypointDao
+import com.auggie.scratch_map_app.data.local.entity.AchievementDefinitionEntity
 import com.auggie.scratch_map_app.data.local.entity.AchievementUnlockEntity
 import com.auggie.scratch_map_app.data.local.entity.RegionEntity
 import com.auggie.scratch_map_app.data.local.entity.ScratchTileEntity
@@ -18,9 +20,10 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         ScratchTileEntity::class,
         WaypointEntity::class,
         RegionEntity::class,
+        AchievementDefinitionEntity::class,
         AchievementUnlockEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 
@@ -28,6 +31,7 @@ abstract class ScratchMapDatabase : RoomDatabase() {
     abstract fun scratchTileDao(): ScratchTileDao
     abstract fun waypointDao(): WaypointDao
     abstract fun regionDao(): RegionDao
+    abstract fun achievementDefinitionDao(): AchievementDefinitionDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -55,6 +59,23 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_latitude_longitude ON waypoints (latitude, longitude)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_category ON waypoints (category)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_is_unlocked ON waypoints (is_unlocked)")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS achievement_definitions (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        icon_name TEXT NOT NULL,
+                        target_value INTEGER NOT NULL,
+                        metric_type TEXT NOT NULL
+                    )
+                """
+                )
             }
         }
 

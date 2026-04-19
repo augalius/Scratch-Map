@@ -22,6 +22,7 @@ class RegionStatsTest {
         region = region,
         tilesRevealed = tilesRevealed,
         waypointsUnlocked = 0, waypointsTotal = 0,
+        achievements = emptyList(),
         revealedAreaKm2 = revealedAreaKm2, goalAreaKm2 = goalAreaKm2
     )
 

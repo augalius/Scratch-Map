@@ -137,7 +137,8 @@ private fun RegionCard(stats: RegionStats, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                "${"%.2f".format(stats.revealedAreaKm2)} km² · ${stats.waypointsUnlocked}/${stats.waypointsTotal} waypoints",
+                "${"%.2f".format(stats.revealedAreaKm2)} km² · ${stats.waypointsUnlocked}/${stats.waypointsTotal} waypoints · " +
+                        "${stats.achievements.count { it.isUnlocked }}/${stats.achievements.size} achievements",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

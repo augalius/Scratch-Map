@@ -3,6 +3,7 @@ package com.auggie.scratch_map_app.di
 import android.content.Context
 import androidx.room.Room
 import com.auggie.scratch_map_app.data.local.ScratchMapDatabase
+import com.auggie.scratch_map_app.data.local.dao.AchievementDefinitionDao
 import com.auggie.scratch_map_app.data.local.dao.RegionDao
 import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
 import com.auggie.scratch_map_app.data.local.dao.WaypointDao
@@ -26,7 +27,8 @@ object DatabaseModule {
             .addMigrations(
                 ScratchMapDatabase.MIGRATION_2_3,
                 ScratchMapDatabase.MIGRATION_3_4,
-                ScratchMapDatabase.MIGRATION_4_5
+                ScratchMapDatabase.MIGRATION_4_5,
+                ScratchMapDatabase.MIGRATION_5_6
             )
             // No 1→2 migration exists, so v1 installs are recreated from scratch. Everything
             // from v2 onward migrates in place via the chain above.
@@ -48,4 +50,9 @@ object DatabaseModule {
     @Singleton
     fun provideRegionDao(database: ScratchMapDatabase): RegionDao =
         database.regionDao()
+
+    @Provides
+    @Singleton
+    fun provideAchievementDefinitionDao(database: ScratchMapDatabase): AchievementDefinitionDao =
+        database.achievementDefinitionDao()
 }
