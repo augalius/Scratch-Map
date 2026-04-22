@@ -53,7 +53,9 @@ class GetRegionStatsUseCase @Inject constructor(
                     }
                     val tiles = tileLists[i].size.toLong()
 
-                    val applicableDefs = allDefinitions
+                    val applicableDefs = allDefinitions.filter {
+                        it.regionId == null || it.regionId == region.id
+                    }
 
                     val centerLat = (region.minLat + region.maxLat) / 2
                     val tileSize =
@@ -84,7 +86,7 @@ class GetRegionStatsUseCase @Inject constructor(
         val waypointTotal = waypoints.size.toLong().coerceAtLeast(1)
 
         return defs.map { def ->
-            val id = "${region.id}_${def.id}"
+            val id = if (def.regionId == null) "${region.id}_${def.id}" else def.id
 
             // Resolve target value
             val targetValue = when (def.metricType) {

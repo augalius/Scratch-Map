@@ -11,7 +11,8 @@ object AchievementMapper {
         description = e.description,
         iconName = e.iconName,
         targetValue = e.targetValue,
-        metricType = e.metricType
+        metricType = e.metricType,
+        regionId = e.regionId
     )
 
     fun domainToEntity(d: AchievementDefinition) = AchievementDefinitionEntity(
@@ -20,6 +21,7 @@ object AchievementMapper {
         description = d.description,
         iconName = d.iconName,
         targetValue = d.targetValue,
-        metricType = d.metricType
+        metricType = d.metricType,
+        regionId = d.regionId
     )
 }

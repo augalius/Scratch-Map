@@ -12,5 +12,6 @@ data class AchievementDefinition(
     val description: String,
     val iconName: String,
     val targetValue: Long,
-    val metricType: String
+    val metricType: String,
+    val regionId: String? = null
 )

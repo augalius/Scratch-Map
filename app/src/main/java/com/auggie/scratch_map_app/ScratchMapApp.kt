@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app
 
 import android.app.Application
 import com.auggie.scratch_map_app.di.ApplicationScope
+import com.auggie.scratch_map_app.domain.usecase.SeedAchievementsUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedRegionsUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedWaypointsUseCase
 import com.mapbox.common.MapboxOptions
@@ -21,6 +22,9 @@ class ScratchMapApp : Application() {
     lateinit var seedRegionsUseCase: SeedRegionsUseCase
 
     @Inject
+    lateinit var seedAchievementsUseCase: SeedAchievementsUseCase
+
+    @Inject
     @ApplicationScope
     lateinit var appScope: CoroutineScope
 
@@ -32,6 +36,7 @@ class ScratchMapApp : Application() {
         appScope.launch {
             seedWaypointsUseCase()
             seedRegionsUseCase()
+            seedAchievementsUseCase()
         }
     }
 }

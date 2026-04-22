@@ -11,5 +11,6 @@ data class AchievementDefinitionEntity(
     val description: String,
     @ColumnInfo(name = "icon_name") val iconName: String,
     @ColumnInfo(name = "target_value") val targetValue: Long,
-    @ColumnInfo(name = "metric_type") val metricType: String
+    @ColumnInfo(name = "metric_type") val metricType: String,
+    @ColumnInfo(name = "region_id") val regionId: String? = null
 )
