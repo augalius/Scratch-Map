@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auggie.scratch_map_app.domain.model.RegionStats
+import com.auggie.scratch_map_app.ui.components.AchievementCard
 import com.auggie.scratch_map_app.ui.components.ExplorationProgressBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,6 +103,19 @@ private fun RegionDetailContent(
         item {
             RegionHeaderCard(stats)
         }
+
+        item {
+            Text(
+                "Achievements",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+            )
+        }
+
+        items(stats.achievements) { achievement ->
+            AchievementCard(achievement = achievement)
+        }
     }
 }
 
@@ -156,6 +170,10 @@ private fun RegionHeaderCard(stats: RegionStats) {
                 StatChip(
                     label = "Waypoints",
                     value = "${stats.waypointsUnlocked}/${stats.waypointsTotal}"
+                )
+                StatChip(
+                    label = "Achievements",
+                    value = "${stats.achievements.count { it.isUnlocked }}/${stats.achievements.size}"
                 )
             }
         }
