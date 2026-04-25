@@ -1,9 +1,12 @@
 package com.auggie.scratch_map_app.domain.usecase
 
+import com.auggie.scratch_map_app.domain.model.AchievementDefinition
 import com.auggie.scratch_map_app.domain.model.Region
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.StageTarget
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.model.WaypointCategory
+import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
@@ -21,6 +24,7 @@ class GetRegionStatsUseCaseTest {
     private lateinit var regionRepository: RegionRepository
     private lateinit var tileRepository: ScratchTileRepository
     private lateinit var waypointRepository: WaypointRepository
+    private lateinit var achievementRepository: AchievementRepository
     private lateinit var useCase: GetRegionStatsUseCase
 
     private val region = Region(
@@ -43,10 +47,26 @@ class GetRegionStatsUseCaseTest {
     private fun tile(lat: Double, lng: Double) =
         ScratchTile(tileX = 0, tileY = 0, zoomLevel = 16, centerLat = lat, centerLng = lng)
 
+    private fun def(
+        id: String, metricType: String,
+        targetValue: Long = 100L,
+        isRegional: Boolean = true,
+        regionId: String? = null,
+        category: String? = null,
+        stages: List<StageTarget> = emptyList(),
+        description: String = "desc"
+    ) = AchievementDefinition(
+        id = id, title = id, description = description,
+        iconName = "icon", targetValue = targetValue,
+        metricType = metricType, isRegional = isRegional,
+        regionId = regionId, category = category, stages = stages
+    )
+
     private fun setup(
         regions: List<Region> = listOf(region),
         tiles: List<ScratchTile> = emptyList(),
-        waypoints: List<Waypoint> = emptyList()
+        waypoints: List<Waypoint> = emptyList(),
+        defs: List<AchievementDefinition> = emptyList()
     ) {
         whenever(regionRepository.observeAll()).thenReturn(flowOf(regions))
         whenever(tileRepository.observeTilesInBounds(any(), any(), any(), any())).thenReturn(
@@ -55,6 +75,7 @@ class GetRegionStatsUseCaseTest {
             )
         )
         whenever(waypointRepository.observeAll()).thenReturn(flowOf(waypoints))
+        whenever(achievementRepository.observeDefinitions()).thenReturn(flowOf(defs))
     }
 
     @Before
@@ -62,10 +83,12 @@ class GetRegionStatsUseCaseTest {
         regionRepository = mock()
         tileRepository = mock()
         waypointRepository = mock()
+        achievementRepository = mock()
         useCase = GetRegionStatsUseCase(
             regionRepository,
             tileRepository,
-            waypointRepository
+            waypointRepository,
+            achievementRepository
         )
     }
 
@@ -135,16 +158,102 @@ class GetRegionStatsUseCaseTest {
 
 
 
+    @Test
+    fun `TILES metric currentValue equals tile count`() = runTest {
+        setup(
+            tiles = listOf(tile(54.685, 25.285), tile(54.686, 25.286)),
+            defs = listOf(def("a1", "TILES"))
+        )
+        assertEquals(2L, useCase().first()[0].achievements[0].currentValue)
+    }
 
+    @Test
+    fun `TILES_PERCENT metric currentValue equals tile count`() = runTest {
+        setup(tiles = listOf(tile(54.685, 25.285)), defs = listOf(def("a1", "TILES_PERCENT")))
+        assertEquals(1L, useCase().first()[0].achievements[0].currentValue)
+    }
 
+    @Test
+    fun `WAYPOINTS metric currentValue equals unlocked count`() = runTest {
+        setup(
+            waypoints = listOf(
+                waypoint("wp1", 54.685, 25.285, unlocked = true),
+                waypoint("wp2", 54.686, 25.286, unlocked = false)
+            ),
+            defs = listOf(def("a1", "WAYPOINTS"))
+        )
+        assertEquals(1L, useCase().first()[0].achievements[0].currentValue)
+    }
 
+    @Test
+    fun `WAYPOINTS_CATEGORY skipped when no matching category in region`() = runTest {
+        setup(
+            waypoints = listOf(waypoint("wp1", 54.685, 25.285, category = WaypointCategory.PARK)),
+            defs = listOf(def("a1", "WAYPOINTS_CATEGORY", category = "CHURCH"))
+        )
+        assertTrue(useCase().first()[0].achievements.isEmpty())
+    }
 
+    @Test
+    fun `WAYPOINTS_CATEGORY currentValue counts unlocked category waypoints`() = runTest {
+        setup(
+            waypoints = listOf(
+                waypoint("c1", 54.685, 25.285, unlocked = true, category = WaypointCategory.CHURCH),
+                waypoint("c2", 54.686, 25.286, unlocked = false, category = WaypointCategory.CHURCH)
+            ),
+            defs = listOf(def("a1", "WAYPOINTS_CATEGORY", category = "CHURCH"))
+        )
+        assertEquals(1L, useCase().first()[0].achievements[0].currentValue)
+    }
 
+    @Test
+    fun `achievement description placeholder is replaced with region name`() = runTest {
+        setup(defs = listOf(def("a1", "TILES", description = "Explore {region}")))
+        assertEquals("Explore Old Town", useCase().first()[0].achievements[0].description)
+    }
 
+    @Test
+    fun `regional achievement id is prefixed with region id`() = runTest {
+        setup(defs = listOf(def("a1", "TILES", isRegional = true)))
+        assertEquals("r1_a1", useCase().first()[0].achievements[0].id)
+    }
 
+    @Test
+    fun `non-regional achievement id is not prefixed`() = runTest {
+        setup(defs = listOf(def("ach_global", "TILES", isRegional = false, regionId = "r1")))
+        assertEquals("ach_global", useCase().first()[0].achievements[0].id)
+    }
 
+    @Test
+    fun `TILES_PERCENT targetValue resolves to goalTiles`() = runTest {
+        setup(defs = listOf(def("a1", "TILES_PERCENT", targetValue = 999L)))
+        assertEquals(100L, useCase().first()[0].achievements[0].targetValue)
+    }
 
+    @Test
+    fun `achievement with absolute stages resolves stage targets`() = runTest {
+        val stages = listOf(
+            StageTarget.Absolute(25L), StageTarget.Absolute(50L), StageTarget.Absolute(100L)
+        )
+        setup(defs = listOf(def("a1", "TILES", stages = stages)))
+        val ach = useCase().first()[0].achievements[0]
+        assertEquals(3, ach.stages.size)
+        assertEquals(25L, ach.stages[0].targetValue)
+        assertEquals(100L, ach.stages[2].targetValue)
+    }
 
+    @Test
+    fun `TILES_PERCENT stages convert target_percent to tile count`() = runTest {
+        val stages = listOf(
+            StageTarget.Percent(25), StageTarget.Percent(50), StageTarget.Percent(100)
+        )
+        setup(defs = listOf(def("a1", "TILES_PERCENT", stages = stages)))
+        val ach = useCase().first()[0].achievements[0]
+        assertEquals(3, ach.stages.size)
+        assertEquals(25L, ach.stages[0].targetValue)
+        assertEquals(50L, ach.stages[1].targetValue)
+        assertEquals(100L, ach.stages[2].targetValue)
+    }
 
 
     @Test
@@ -162,6 +271,7 @@ class GetRegionStatsUseCaseTest {
             )
         )
         whenever(waypointRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        whenever(achievementRepository.observeDefinitions()).thenReturn(flowOf(emptyList()))
         val result = useCase().first()
         assertEquals(2, result.size)
         assertEquals("r1", result[0].region.id)

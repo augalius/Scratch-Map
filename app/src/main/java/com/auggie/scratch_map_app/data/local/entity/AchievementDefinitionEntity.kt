@@ -12,5 +12,8 @@ data class AchievementDefinitionEntity(
     @ColumnInfo(name = "icon_name") val iconName: String,
     @ColumnInfo(name = "target_value") val targetValue: Long,
     @ColumnInfo(name = "metric_type") val metricType: String,
-    @ColumnInfo(name = "region_id") val regionId: String? = null
+    @ColumnInfo(name = "region_id") val regionId: String? = null,
+    @ColumnInfo(name = "is_regional") val isRegional: Boolean = false,
+    @ColumnInfo(name = "category") val category: String? = null,
+    @ColumnInfo(name = "stages_json") val stagesJson: String = "[]"
 )
