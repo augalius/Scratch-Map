@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
     alias(libs.plugins.secrets.gradle.plugin)
 }
 
@@ -76,6 +77,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.timber)
     implementation(libs.coil.compose)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
     implementation(libs.mapbox.maps)
 
     testImplementation(libs.junit)

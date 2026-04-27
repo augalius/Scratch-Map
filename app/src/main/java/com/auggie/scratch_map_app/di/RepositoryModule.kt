@@ -1,9 +1,11 @@
 package com.auggie.scratch_map_app.di
 
+import com.auggie.scratch_map_app.data.repository.AuthRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.ScratchTileRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.AchievementRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.WaypointRepositoryImpl
+import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
@@ -28,4 +30,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAchievementRepository(impl: AchievementRepositoryImpl): AchievementRepository
+
+    @Binds @Singleton
+    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 }
