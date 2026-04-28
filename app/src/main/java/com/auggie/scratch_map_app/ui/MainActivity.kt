@@ -22,20 +22,26 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.ui.navigation.Screen
 import com.auggie.scratch_map_app.ui.navigation.ScratchMapNavHost
 import com.auggie.scratch_map_app.ui.theme.ScratchMapTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isLoggedIn = authRepository.currentUser != null
         setContent {
             ScratchMapTheme {
-                ScratchMapMainScreen()
+                ScratchMapMainScreen(isLoggedIn = isLoggedIn)
             }
         }
     }
@@ -49,7 +55,7 @@ private data class NavItem(
 )
 
 @Composable
-private fun ScratchMapMainScreen() {
+private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
     val navController = rememberNavController()
     val items = remember {
         listOf(
@@ -57,6 +63,8 @@ private fun ScratchMapMainScreen() {
             NavItem(Screen.Stats, "Stats", Icons.Filled.Insights, Icons.Outlined.Insights)
         )
     }
+
+    val startDestination = if (isLoggedIn) Screen.Map.route else Screen.Auth.route
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -86,6 +94,7 @@ private fun ScratchMapMainScreen() {
         ) {
             ScratchMapNavHost(
                 navController = navController,
+                startDestination = startDestination,
                 modifier = Modifier.fillMaxSize(),
                 onBottomBarVisibilityChanged = { bottomBarScrollVisible = it }
             )
