@@ -14,5 +14,6 @@ data class ScratchTileEntity(
     @ColumnInfo(name = "tile_y") val tileY: Int,
     @ColumnInfo(name = "zoom_level") val zoomLevel: Int,
     @ColumnInfo(name = "center_lat") val centerLat: Double,
-    @ColumnInfo(name = "center_lng") val centerLng: Double
+    @ColumnInfo(name = "center_lng") val centerLng: Double,
+    @ColumnInfo(name = "synced_to_cloud") val syncedToCloud: Boolean = false
 )

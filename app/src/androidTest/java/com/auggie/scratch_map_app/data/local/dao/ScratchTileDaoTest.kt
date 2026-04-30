@@ -60,6 +60,42 @@ class ScratchTileDaoTest {
     }
 
     @Test
+    fun newTiles_areMarkedAsUnsynced() = runTest {
+        dao.insertTiles(listOf(ScratchTileEntity(100, 200, 16, 54.6872, 25.2797)))
+        val unsynced = dao.getUnsynced()
+        assertEquals(1, unsynced.size)
+    }
+
+    @Test
+    fun markAllSynced_clearsUnsyncedList() = runTest {
+        dao.insertTiles(listOf(
+            ScratchTileEntity(100, 200, 16, 54.6872, 25.2797),
+            ScratchTileEntity(101, 200, 16, 54.6873, 25.2798)
+        ))
+        dao.markAllSynced()
+        assertTrue(dao.getUnsynced().isEmpty())
+    }
+
+    @Test
+    fun markAllUnsynced_makesAllTilesUnsynced() = runTest {
+        dao.insertTiles(listOf(ScratchTileEntity(100, 200, 16, 54.6872, 25.2797)))
+        dao.markAllSynced()
+        dao.markAllUnsynced()
+        assertEquals(1, dao.getUnsynced().size)
+    }
+
+    @Test
+    fun getAll_returnsAllInsertedTiles() = runTest {
+        val tiles = listOf(
+            ScratchTileEntity(100, 200, 16, 54.6872, 25.2797),
+            ScratchTileEntity(101, 201, 16, 54.6873, 25.2798),
+            ScratchTileEntity(102, 202, 16, 54.6874, 25.2799)
+        )
+        dao.insertTiles(tiles)
+        assertEquals(3, dao.getAll().size)
+    }
+
+    @Test
     fun tilesWithDifferentZoomLevels_areStoredSeparately() = runTest {
         val tile16 = ScratchTileEntity(100, 200, 16, 54.6872, 25.2797)
         val tile17 = ScratchTileEntity(100, 200, 17, 54.6872, 25.2797)

@@ -1,5 +1,6 @@
 package com.auggie.scratch_map_app.domain.usecase
 
+import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
@@ -13,6 +14,7 @@ import org.mockito.kotlin.*
 class CheckWaypointProximityUseCaseTest {
 
     private lateinit var waypointRepository: WaypointRepository
+    private lateinit var syncService: SyncRepository
     private lateinit var useCase: CheckWaypointProximityUseCase
 
     private val userLocation = UserLocation(
@@ -35,7 +37,8 @@ class CheckWaypointProximityUseCaseTest {
     @Before
     fun setUp() {
         waypointRepository = mock()
-        useCase = CheckWaypointProximityUseCase(waypointRepository)
+        syncService = mock()
+        useCase = CheckWaypointProximityUseCase(waypointRepository, syncService)
     }
 
     @Test
@@ -59,6 +62,15 @@ class CheckWaypointProximityUseCaseTest {
     }
 
     @Test
+    fun `waypoint within radius triggers Firestore sync`() = runTest {
+        whenever(waypointRepository.getLockedWaypointsInBounds(any(), any(), any(), any())).thenReturn(listOf(nearbyWaypoint))
+
+        useCase(userLocation)
+
+        verify(syncService).syncWaypointUnlock(eq("wp_near"), any())
+    }
+
+    @Test
     fun `waypoint outside radius is not unlocked`() = runTest {
         whenever(waypointRepository.getLockedWaypointsInBounds(any(), any(), any(), any())).thenReturn(listOf(farWaypoint))
 
@@ -66,6 +78,7 @@ class CheckWaypointProximityUseCaseTest {
 
         assertTrue(result.isEmpty())
         verify(waypointRepository, never()).markUnlocked(any())
+        verify(syncService, never()).syncWaypointUnlock(any(), any())
     }
 
     @Test

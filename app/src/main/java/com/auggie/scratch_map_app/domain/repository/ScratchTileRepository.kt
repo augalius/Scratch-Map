@@ -9,4 +9,8 @@ interface ScratchTileRepository {
     suspend fun revealTiles(tiles: List<ScratchTile>): Int
     fun observeTileCount(): Flow<Long>
     suspend fun getTotalTileCount(): Long
+    suspend fun getUnsyncedTiles(): List<ScratchTile>
+    suspend fun getAllTiles(): List<ScratchTile>
+    suspend fun markAllTilesSynced()
+    suspend fun markAllTilesUnsynced()
 }

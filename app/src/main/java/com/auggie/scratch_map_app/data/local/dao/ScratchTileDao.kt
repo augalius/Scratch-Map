@@ -13,8 +13,8 @@ interface ScratchTileDao {
     fun observeAll(): Flow<List<ScratchTileEntity>>
 
     @Query(
-        """SELECT * FROM scratch_tiles
-        WHERE center_lat BETWEEN :minLat AND :maxLat
+        """SELECT * FROM scratch_tiles 
+        WHERE center_lat BETWEEN :minLat AND :maxLat 
         AND center_lng BETWEEN :minLng AND :maxLng"""
     )
     fun observeInBounds(
@@ -32,4 +32,21 @@ interface ScratchTileDao {
 
     @Query("SELECT COUNT(*) FROM scratch_tiles")
     suspend fun getCount(): Long
+
+    @Query("SELECT * FROM scratch_tiles WHERE synced_to_cloud = 0 ORDER BY tile_x, tile_y")
+    suspend fun getUnsynced(): List<ScratchTileEntity>
+
+    /**
+     * Ordered deliberately: [com.auggie.scratch_map_app.data.remote.FirestoreSyncService] derives
+     * cloud chunk ids from each tile's index in this list, so an unstable order would shuffle
+     * tiles between chunks and orphan already-uploaded data.
+     */
+    @Query("SELECT * FROM scratch_tiles ORDER BY tile_x, tile_y")
+    suspend fun getAll(): List<ScratchTileEntity>
+
+    @Query("UPDATE scratch_tiles SET synced_to_cloud = 1")
+    suspend fun markAllSynced()
+
+    @Query("UPDATE scratch_tiles SET synced_to_cloud = 0")
+    suspend fun markAllUnsynced()
 }

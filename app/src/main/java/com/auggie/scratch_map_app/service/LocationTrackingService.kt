@@ -16,11 +16,14 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.R
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.usecase.CheckWaypointProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
+import com.auggie.scratch_map_app.di.ApplicationScope
 import com.auggie.scratch_map_app.domain.location.LocationClient
 import com.auggie.scratch_map_app.util.TileCalculator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -47,7 +50,16 @@ class LocationTrackingService : LifecycleService() {
     @Inject
     lateinit var statusTracker: ServiceStatusTracker
 
+    @Inject
+    lateinit var syncRepository: SyncRepository
+
+    /** Process-lifetime scope: the final flush must survive [stopSelf]. */
+    @Inject
+    @ApplicationScope
+    lateinit var appScope: CoroutineScope
+
     private var locationJob: Job? = null
+    private var syncJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var totalNewTiles = 0
     private var lastLocation: UserLocation? = null
@@ -106,6 +118,21 @@ class LocationTrackingService : LifecycleService() {
         startForeground(NOTIFICATION_ID, createNotification("Starting..."))
         acquireWakeLock()
 
+        // Every 5 minutes: if 50+ new tiles have accumulated since the last upload, flush
+        // just those new tiles. If fewer than 50, keep counting — they roll into the next
+        // interval. Everything remaining is flushed when tracking stops.
+        syncJob = lifecycleScope.launch {
+            var lastFlushedTileCount = 0
+            while (true) {
+                kotlinx.coroutines.delay(5 * 60_000)
+                val newTilesSinceFlush = totalNewTiles - lastFlushedTileCount
+                if (newTilesSinceFlush >= 50) {
+                    syncRepository.flushTiles()
+                    lastFlushedTileCount = totalNewTiles
+                }
+            }
+        }
+
         locationJob = lifecycleScope.launch {
             locationClient.getLocationUpdates(
                 intervalMs = INTERVAL_MS,
@@ -122,6 +149,11 @@ class LocationTrackingService : LifecycleService() {
         statusTracker.onTrackingStopped()
         locationJob?.cancel()
         locationJob = null
+        syncJob?.cancel()
+        syncJob = null
+        // Must NOT use lifecycleScope: stopSelf() below destroys the service and cancels it
+        // mid-flush, silently dropping every tile revealed since the last interval upload.
+        appScope.launch { syncRepository.flushTiles() }
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

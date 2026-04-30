@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app.domain.usecase
 
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.model.Waypoint
+import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.util.TileCalculator
 import javax.inject.Inject
@@ -9,7 +10,8 @@ import javax.inject.Singleton
 
 @Singleton
 class CheckWaypointProximityUseCase @Inject constructor(
-    private val waypointRepository: WaypointRepository
+    private val waypointRepository: WaypointRepository,
+    private val syncRepository: SyncRepository
 ) {
     suspend operator fun invoke(location: UserLocation): List<Waypoint> {
         // Coarse spatial pre-filter: only pull locked waypoints near the user (index-backed
@@ -30,7 +32,9 @@ class CheckWaypointProximityUseCase @Inject constructor(
                 wp.latitude, wp.longitude
             )
             if (distance <= wp.unlockRadiusMeters) {
+                val now = System.currentTimeMillis()
                 waypointRepository.markUnlocked(wp.id)
+                syncRepository.syncWaypointUnlock(wp.stringId, now)
                 unlocked.add(wp.copy(isUnlocked = true))
             }
         }

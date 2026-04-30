@@ -35,4 +35,13 @@ class ScratchTileRepositoryImpl @Inject constructor(
     override fun observeTileCount(): Flow<Long> = dao.observeCount()
 
     override suspend fun getTotalTileCount(): Long = dao.getCount()
+
+    override suspend fun getUnsyncedTiles(): List<ScratchTile> =
+        dao.getUnsynced().map(TileMapper::entityToDomain)
+
+    override suspend fun getAllTiles(): List<ScratchTile> =
+        dao.getAll().map(TileMapper::entityToDomain)
+
+    override suspend fun markAllTilesSynced() = dao.markAllSynced()
+    override suspend fun markAllTilesUnsynced() = dao.markAllUnsynced()
 }

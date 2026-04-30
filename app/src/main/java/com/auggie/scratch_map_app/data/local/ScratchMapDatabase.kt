@@ -23,7 +23,7 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         AchievementDefinitionEntity::class,
         AchievementUnlockEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 
@@ -59,6 +59,12 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_latitude_longitude ON waypoints (latitude, longitude)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_category ON waypoints (category)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_is_unlocked ON waypoints (is_unlocked)")
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE scratch_tiles ADD COLUMN synced_to_cloud INTEGER NOT NULL DEFAULT 0")
             }
         }
 
