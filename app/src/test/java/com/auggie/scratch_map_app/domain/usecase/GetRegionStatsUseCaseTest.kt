@@ -27,12 +27,19 @@ class GetRegionStatsUseCaseTest {
     private lateinit var achievementRepository: AchievementRepository
     private lateinit var useCase: GetRegionStatsUseCase
 
+    private val squareBoundary = listOf(
+        54.67 to 25.27, 54.70 to 25.27,
+        54.70 to 25.30, 54.67 to 25.30
+    )
+
     private val region = Region(
         id = "r1", name = "Old Town",
         minLat = 54.67, maxLat = 54.70,
         minLng = 25.27, maxLng = 25.30,
         goalTiles = 100
     )
+
+    private val regionWithBoundary = region.copy(boundaryPoints = squareBoundary)
 
     private fun waypoint(
         id: String, lat: Double, lng: Double,
@@ -122,8 +129,33 @@ class GetRegionStatsUseCaseTest {
     }
 
 
+    @Test
+    fun `waypoint inside polygon boundary is included`() = runTest {
+        setup(
+            regions = listOf(regionWithBoundary),
+            waypoints = listOf(waypoint("wp_in", 54.685, 25.285))
+        )
+        assertEquals(1, useCase().first()[0].waypointsTotal)
+    }
 
+    @Test
+    fun `waypoint outside polygon boundary is excluded`() = runTest {
+        setup(
+            regions = listOf(regionWithBoundary),
+            waypoints = listOf(waypoint("wp_out", 54.60, 25.20))
+        )
+        assertEquals(0, useCase().first()[0].waypointsTotal)
+    }
 
+    @Test
+    fun `polygon boundary splits waypoints correctly`() = runTest {
+        val inside = waypoint("wp_in", 54.685, 25.285)
+        val outside = waypoint("wp_out", 54.60, 25.20)
+        setup(regions = listOf(regionWithBoundary), waypoints = listOf(inside, outside))
+        val stats = useCase().first()[0]
+        assertEquals(1, stats.waypointsTotal)
+        assertEquals(0, stats.waypointsUnlocked)
+    }
 
 
     @Test
@@ -138,6 +170,14 @@ class GetRegionStatsUseCaseTest {
         assertEquals(0L, useCase().first()[0].tilesRevealed)
     }
 
+    @Test
+    fun `tiles outside polygon boundary are not counted`() = runTest {
+        setup(
+            regions = listOf(regionWithBoundary),
+            tiles = listOf(tile(54.685, 25.285), tile(54.60, 25.20))
+        )
+        assertEquals(1L, useCase().first()[0].tilesRevealed)
+    }
 
 
     @Test

@@ -14,6 +14,7 @@ import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.util.TileCalculator
+import com.auggie.scratch_map_app.util.isInsidePolygon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -50,11 +51,21 @@ class GetRegionStatsUseCase @Inject constructor(
                 val allDefinitions = values[regions.size + 1] as List<AchievementDefinition>
 
                 regions.mapIndexed { i, region ->
+                    val boundary = region.boundaryPoints
                     val wps = allWaypoints.filter { wp ->
-                        wp.latitude in region.minLat..region.maxLat &&
+                        if (boundary.isNotEmpty()) isInsidePolygon(
+                            wp.latitude,
+                            wp.longitude,
+                            boundary
+                        )
+                        else wp.latitude in region.minLat..region.maxLat &&
                                 wp.longitude in region.minLng..region.maxLng
                     }
-                    val tiles = tileLists[i].size.toLong()
+                    val tiles = if (boundary.isNotEmpty())
+                        tileLists[i].count { isInsidePolygon(it.centerLat, it.centerLng, boundary) }
+                            .toLong()
+                    else
+                        tileLists[i].size.toLong()
 
                     val applicableDefs = allDefinitions.filter {
                         it.isRegional || it.regionId == region.id

@@ -8,7 +8,8 @@ data class Region(
     val maxLat: Double,
     val minLng: Double,
     val maxLng: Double,
-    val goalTiles: Int
+    val goalTiles: Int,
+    val boundaryPoints: List<Pair<Double, Double>> = emptyList()
 )
 
 data class RegionStats(

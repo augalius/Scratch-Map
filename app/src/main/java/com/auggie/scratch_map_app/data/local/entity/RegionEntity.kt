@@ -13,5 +13,6 @@ data class RegionEntity(
     @ColumnInfo(name = "max_lat") val maxLat: Double,
     @ColumnInfo(name = "min_lng") val minLng: Double,
     @ColumnInfo(name = "max_lng") val maxLng: Double,
-    @ColumnInfo(name = "goal_tiles") val goalTiles: Int
+    @ColumnInfo(name = "goal_tiles") val goalTiles: Int,
+    @ColumnInfo(name = "boundary_json") val boundaryJson: String = ""
 )

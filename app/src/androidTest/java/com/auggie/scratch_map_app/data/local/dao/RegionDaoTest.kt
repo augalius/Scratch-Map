@@ -97,6 +97,13 @@ class RegionDaoTest {
         assertTrue(dao.observeAll().first().isEmpty())
     }
 
+    @Test
+    fun insertAll_preservesBoundaryJson() = runTest {
+        val withBoundary = oldTown.copy(boundaryJson = """[[54.67,25.27],[54.70,25.30]]""")
+        dao.insertAll(listOf(withBoundary))
+        val result = dao.observeAll().first()[0]
+        assertEquals("""[[54.67,25.27],[54.70,25.30]]""", result.boundaryJson)
+    }
 
     @Test
     fun emptyDatabase_returnsEmptyList() = runTest {
