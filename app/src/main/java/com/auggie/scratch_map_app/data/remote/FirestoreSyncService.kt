@@ -1,15 +1,22 @@
 package com.auggie.scratch_map_app.data.remote
 
+import com.auggie.scratch_map_app.BuildConfig
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.util.TileCalculator
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +26,9 @@ import javax.inject.Singleton
 @Singleton
 class FirestoreSyncService @Inject constructor(
     private val firestore: FirebaseFirestore,
+    private val firebaseAuth: FirebaseAuth,
     private val authRepository: AuthRepository,
+    private val accountStatus: AccountStatusRepository,
     private val tileRepository: ScratchTileRepository,
     private val waypointRepository: WaypointRepository
 ) : SyncRepository {
@@ -28,8 +37,15 @@ class FirestoreSyncService @Inject constructor(
         private const val TILES = "tiles"
     }
 
-    /** Uid to write progress for, or null when signed out. */
-    private fun writableUid(): String? = authRepository.currentUser?.uid
+    /** Uid to write progress for, or null when signed out or suspended (rules would reject it). */
+    private fun writableUid(): String? {
+        val uid = authRepository.currentUser?.uid ?: return null
+        if (accountStatus.isDisabled.value) {
+            Timber.i("Account suspended, skipping cloud write")
+            return null
+        }
+        return uid
+    }
 
     /**
      * Upload all unsynced tiles to Firestore.
@@ -80,6 +96,8 @@ class FirestoreSyncService @Inject constructor(
 
         if (allSucceeded) {
             tileRepository.markAllTilesSynced()
+            // Keep the profile's progress counts and "last active" current.
+            if (dirtyIndices.isNotEmpty()) upsertProfile()
         }
     }
 
@@ -147,4 +165,28 @@ class FirestoreSyncService @Inject constructor(
 
 
 
+    override suspend fun upsertProfile() {
+        val uid = writableUid() ?: return
+        runCatching {
+            val user = firebaseAuth.currentUser
+            val unlockedWaypoints = waypointRepository.observeAll().first().count { it.isUnlocked }
+
+            // Never includes `disabled` – only the backend may change it.
+            val profile = buildMap<String, Any> {
+                put("email", user?.email ?: "")
+                put("lastActiveAt", FieldValue.serverTimestamp())
+                put("platform", "android")
+                put("appVersion", BuildConfig.VERSION_NAME)
+                put("appVersionCode", BuildConfig.VERSION_CODE)
+                put(
+                    "stats", mapOf(
+                        "tiles" to tileRepository.getTotalTileCount(),
+                        "waypoints" to unlockedWaypoints
+                    )
+                )
+                user?.metadata?.creationTimestamp?.let { put("createdAt", Timestamp(Date(it))) }
+            }
+            firestore.collection("users").document(uid).set(profile, SetOptions.merge()).await()
+        }.onFailure { Timber.w(it, "upsertProfile failed") }
+    }
 }

@@ -18,15 +18,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
+import com.auggie.scratch_map_app.service.LocationTrackingService
+import com.auggie.scratch_map_app.ui.auth.AccountSuspendedScreen
 import com.auggie.scratch_map_app.ui.navigation.Screen
 import com.auggie.scratch_map_app.ui.navigation.ScratchMapNavHost
 import com.auggie.scratch_map_app.ui.theme.ScratchMapTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,6 +39,8 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository
+    @Inject
+    lateinit var accountStatusRepository: AccountStatusRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +48,16 @@ class MainActivity : ComponentActivity() {
         val isLoggedIn = authRepository.currentUser != null
         setContent {
             ScratchMapTheme {
-                ScratchMapMainScreen(isLoggedIn = isLoggedIn)
+                val suspended by accountStatusRepository.isDisabled.collectAsStateWithLifecycle()
+                val scope = rememberCoroutineScope()
+                if (suspended) {
+                    LaunchedEffect(Unit) {
+                        if (LocationTrackingService.isRunning) LocationTrackingService.stop(this@MainActivity)
+                    }
+                    AccountSuspendedScreen(onSignOut = { scope.launch { authRepository.logout() } })
+                } else {
+                    ScratchMapMainScreen(isLoggedIn = isLoggedIn)
+                }
             }
         }
     }

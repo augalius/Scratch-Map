@@ -13,4 +13,10 @@ interface SyncRepository {
 
     suspend fun syncWaypointUnlock(stringId: String, unlockedAt: Long)
     suspend fun restoreWaypointUnlocks()
+
+    /**
+     * Writes the signed-in user's profile summary (email, last activity, app version, progress
+     * counts) stored on the backend. Never throws.
+     */
+    suspend fun upsertProfile()
 }

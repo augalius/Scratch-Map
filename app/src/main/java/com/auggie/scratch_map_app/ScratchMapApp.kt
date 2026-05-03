@@ -68,7 +68,7 @@ class ScratchMapApp : Application() {
 
     /**
      * Each time a user is first seen (app start while signed in, or a fresh sign-in): pull cloud
-     * progress down and push local tiles up.
+     * progress down, push local tiles up, and update the profile summary.
      */
     private suspend fun restoreOnSignIn() {
         var lastRestoredUid: String? = null
@@ -79,6 +79,7 @@ class ScratchMapApp : Application() {
             syncRepository.restoreTiles()
             syncRepository.restoreWaypointUnlocks()
             syncRepository.flushTiles()
+            syncRepository.upsertProfile()
         }
     }
 

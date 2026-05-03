@@ -4,6 +4,8 @@ import com.auggie.scratch_map_app.data.remote.FirestoreSyncService
 import com.auggie.scratch_map_app.data.repository.AuthRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.ScratchTileRepositoryImpl
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
+import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
+import com.auggie.scratch_map_app.data.remote.FirestoreAccountStatusRepository
 import com.auggie.scratch_map_app.data.repository.AchievementRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.WaypointRepositoryImpl
@@ -38,4 +40,9 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindSyncRepository(impl: FirestoreSyncService): SyncRepository
+
+    @Binds @Singleton
+    abstract fun bindAccountStatusRepository(
+        impl: FirestoreAccountStatusRepository
+    ): AccountStatusRepository
 }
