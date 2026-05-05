@@ -100,6 +100,13 @@ class WaypointDaoTest {
         assertNull(result)
     }
 
+    @Test
+    fun deleteNotIn_removesWaypointsNotInList() = runTest {
+        dao.insertAll(listOf(church, monument))
+        dao.deleteNotIn(listOf("church_1"))
+        assertNull(dao.getByStringId("monument_1"))
+        assertNotNull(dao.getByStringId("church_1"))
+    }
 
     @Test
     fun emptyDatabase_returnsEmptyLockedList() = runTest {

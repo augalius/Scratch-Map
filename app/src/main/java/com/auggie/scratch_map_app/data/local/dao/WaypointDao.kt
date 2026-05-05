@@ -44,4 +44,22 @@ interface WaypointDao {
 
     @Query("UPDATE waypoints SET is_unlocked = 1 WHERE id = :id")
     suspend fun markUnlocked(id: Long)
+
+    @Query(
+        """UPDATE waypoints SET
+        name = :name, description = :description,
+        latitude = :latitude, longitude = :longitude,
+        category = :category, unlock_radius_meters = :unlockRadiusMeters,
+        image_url = :imageUrl
+        WHERE string_id = :stringId"""
+    )
+    suspend fun updateContentFields(
+        stringId: String, name: String, description: String,
+        latitude: Double, longitude: Double, category: String,
+        unlockRadiusMeters: Int, imageUrl: String
+    )
+
+    /** Drops waypoints no longer present in remote content. */
+    @Query("DELETE FROM waypoints WHERE string_id NOT IN (:stringIds)")
+    suspend fun deleteNotIn(stringIds: List<String>)
 }

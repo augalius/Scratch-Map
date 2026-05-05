@@ -16,5 +16,7 @@ interface WaypointRepository {
     suspend fun getByStringId(stringId: String): Waypoint?
 
     suspend fun insertAll(waypoints: List<Waypoint>)
+    suspend fun updateContentFields(waypoint: Waypoint)
+    suspend fun deleteNotIn(stringIds: List<String>)
     suspend fun markUnlocked(id: Long)
 }

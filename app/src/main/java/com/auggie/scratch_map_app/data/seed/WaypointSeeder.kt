@@ -2,57 +2,42 @@ package com.auggie.scratch_map_app.data.seed
 
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.model.WaypointCategory
+import com.auggie.scratch_map_app.domain.repository.WaypointContentSource
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Local starter set of waypoints around Kaunas, used until content is served from a backend.
- */
 @Singleton
-class WaypointSeeder @Inject constructor() {
+class WaypointSeeder @Inject constructor(
+    private val firestore: FirebaseFirestore
+) : WaypointContentSource {
 
-    fun fetchWaypoints(): List<Waypoint> = listOf(
-        Waypoint(
-            stringId = "kaunas_castle",
-            name = "Kaunas Castle",
-            latitude = 54.8990,
-            longitude = 23.8855,
-            category = WaypointCategory.FORT
-        ),
-        Waypoint(
-            stringId = "kaunas_town_hall",
-            name = "Kaunas Town Hall",
-            latitude = 54.8971,
-            longitude = 23.8862,
-            category = WaypointCategory.HISTORIC
-        ),
-        Waypoint(
-            stringId = "kaunas_cathedral",
-            name = "Kaunas Cathedral Basilica",
-            latitude = 54.8968,
-            longitude = 23.8899,
-            category = WaypointCategory.CHURCH
-        ),
-        Waypoint(
-            stringId = "resurrection_church",
-            name = "Christ's Resurrection Church",
-            latitude = 54.9014,
-            longitude = 23.9283,
-            category = WaypointCategory.CHURCH
-        ),
-        Waypoint(
-            stringId = "war_museum",
-            name = "Vytautas the Great War Museum",
-            latitude = 54.8990,
-            longitude = 23.9124,
-            category = WaypointCategory.MUSEUM
-        ),
-        Waypoint(
-            stringId = "aleksotas_viewpoint",
-            name = "Aleksotas Viewpoint",
-            latitude = 54.8925,
-            longitude = 23.8945,
-            category = WaypointCategory.VIEWPOINT
-        )
-    )
+    override suspend fun fetchWaypoints(): List<Waypoint> {
+        return try {
+            val snapshot = firestore.collection("waypoints").get().await()
+            snapshot.documents.mapNotNull { doc ->
+                runCatching {
+                    val categoryStr = (doc.getString("category") ?: "OTHER").uppercase()
+                    val category = runCatching { WaypointCategory.valueOf(categoryStr) }
+                        .getOrDefault(WaypointCategory.OTHER)
+                    Waypoint(
+                        stringId = doc.id,
+                        name = doc.getString("name") ?: return@mapNotNull null,
+                        latitude = doc.getDouble("latitude") ?: return@mapNotNull null,
+                        longitude = doc.getDouble("longitude") ?: return@mapNotNull null,
+                        description = doc.getString("description") ?: "",
+                        category = category,
+                        unlockRadiusMeters = (doc.getLong("unlock_radius_meters") ?: 50L).toInt(),
+                        imageUrl = doc.getString("image_url") ?: ""
+                    )
+                }.onFailure { Timber.e(it, "Failed to parse waypoint doc: %s", doc.id) }
+                    .getOrNull()
+            }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to fetch waypoints from Firestore")
+            emptyList()
+        }
+    }
 }

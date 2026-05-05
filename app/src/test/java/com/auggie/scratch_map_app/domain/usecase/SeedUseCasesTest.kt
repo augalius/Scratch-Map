@@ -1,9 +1,9 @@
 package com.auggie.scratch_map_app.domain.usecase
 
-import com.auggie.scratch_map_app.data.seed.AchievementSeeder
-import com.auggie.scratch_map_app.data.seed.RegionSeeder
-import com.auggie.scratch_map_app.data.seed.WaypointSeeder
 import com.auggie.scratch_map_app.domain.model.AchievementDefinition
+import com.auggie.scratch_map_app.domain.repository.AchievementContentSource
+import com.auggie.scratch_map_app.domain.repository.RegionContentSource
+import com.auggie.scratch_map_app.domain.repository.WaypointContentSource
 import com.auggie.scratch_map_app.domain.model.Region
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
@@ -25,9 +25,9 @@ class SeedUseCasesTest {
     private lateinit var achievementRepository: AchievementRepository
 
     // Seeders — inline mock with mockito
-    private lateinit var regionSeeder: RegionSeeder
-    private lateinit var waypointSeeder: WaypointSeeder
-    private lateinit var achievementSeeder: AchievementSeeder
+    private lateinit var regionSeeder: RegionContentSource
+    private lateinit var waypointSeeder: WaypointContentSource
+    private lateinit var achievementSeeder: AchievementContentSource
 
     private val region = Region(
         id = "r1", name = "Old Town", minLat = 54.67, maxLat = 54.70,
@@ -87,6 +87,7 @@ class SeedUseCasesTest {
         whenever(waypointSeeder.fetchWaypoints()).thenReturn(emptyList())
         SeedWaypointsUseCase(waypointRepository, waypointSeeder)()
         verify(waypointRepository, never()).insertAll(any())
+        verify(waypointRepository, never()).deleteNotIn(any())
     }
 
     @Test
@@ -96,7 +97,19 @@ class SeedUseCasesTest {
         verify(waypointRepository).insertAll(listOf(waypoint))
     }
 
+    @Test
+    fun `seedWaypoints updates content fields for each waypoint`() = runTest {
+        whenever(waypointSeeder.fetchWaypoints()).thenReturn(listOf(waypoint))
+        SeedWaypointsUseCase(waypointRepository, waypointSeeder)()
+        verify(waypointRepository).updateContentFields(waypoint)
+    }
 
+    @Test
+    fun `seedWaypoints deletes waypoints not in seeder list`() = runTest {
+        whenever(waypointSeeder.fetchWaypoints()).thenReturn(listOf(waypoint))
+        SeedWaypointsUseCase(waypointRepository, waypointSeeder)()
+        verify(waypointRepository).deleteNotIn(listOf("wp_1"))
+    }
 
 
     @Test

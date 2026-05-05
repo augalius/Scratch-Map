@@ -2,10 +2,18 @@ package com.auggie.scratch_map_app.di
 
 import com.auggie.scratch_map_app.data.remote.FirestoreSyncService
 import com.auggie.scratch_map_app.data.repository.AuthRepositoryImpl
+import com.auggie.scratch_map_app.data.repository.ContentVersionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.ScratchTileRepositoryImpl
+import com.auggie.scratch_map_app.data.seed.AchievementSeeder
+import com.auggie.scratch_map_app.data.seed.RegionSeeder
+import com.auggie.scratch_map_app.data.seed.WaypointSeeder
+import com.auggie.scratch_map_app.domain.repository.AchievementContentSource
+import com.auggie.scratch_map_app.domain.repository.ContentVersionRepository
+import com.auggie.scratch_map_app.domain.repository.RegionContentSource
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.data.remote.FirestoreAccountStatusRepository
+import com.auggie.scratch_map_app.domain.repository.WaypointContentSource
 import com.auggie.scratch_map_app.data.repository.AchievementRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.WaypointRepositoryImpl
@@ -45,4 +53,20 @@ abstract class RepositoryModule {
     abstract fun bindAccountStatusRepository(
         impl: FirestoreAccountStatusRepository
     ): AccountStatusRepository
+
+    @Binds @Singleton
+    abstract fun bindContentVersionRepository(
+        impl: ContentVersionRepositoryImpl
+    ): ContentVersionRepository
+
+    // Authored-content sources — the Firestore seeders, behind domain-owned interfaces.
+
+    @Binds @Singleton
+    abstract fun bindRegionContentSource(impl: RegionSeeder): RegionContentSource
+
+    @Binds @Singleton
+    abstract fun bindWaypointContentSource(impl: WaypointSeeder): WaypointContentSource
+
+    @Binds @Singleton
+    abstract fun bindAchievementContentSource(impl: AchievementSeeder): AchievementContentSource
 }

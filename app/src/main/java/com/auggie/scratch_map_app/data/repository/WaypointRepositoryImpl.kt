@@ -35,6 +35,21 @@ class WaypointRepositoryImpl @Inject constructor(
     override suspend fun insertAll(waypoints: List<Waypoint>) =
         dao.insertAll(waypoints.map(WaypointMapper::domainToEntity))
 
+    override suspend fun updateContentFields(waypoint: Waypoint) =
+        dao.updateContentFields(
+            stringId = waypoint.stringId,
+            name = waypoint.name,
+            description = waypoint.description,
+            latitude = waypoint.latitude,
+            longitude = waypoint.longitude,
+            category = waypoint.category.name,
+            unlockRadiusMeters = waypoint.unlockRadiusMeters,
+            imageUrl = waypoint.imageUrl
+        )
+
+    override suspend fun deleteNotIn(stringIds: List<String>) =
+        dao.deleteNotIn(stringIds)
+
     override suspend fun markUnlocked(id: Long) =
         dao.markUnlocked(id)
 }

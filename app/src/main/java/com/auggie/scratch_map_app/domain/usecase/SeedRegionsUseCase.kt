@@ -1,6 +1,6 @@
 package com.auggie.scratch_map_app.domain.usecase
 
-import com.auggie.scratch_map_app.data.seed.RegionSeeder
+import com.auggie.scratch_map_app.domain.repository.RegionContentSource
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import timber.log.Timber
 import javax.inject.Inject
@@ -9,7 +9,7 @@ import javax.inject.Singleton
 @Singleton
 class SeedRegionsUseCase @Inject constructor(
     private val regionRepository: RegionRepository,
-    private val seeder: RegionSeeder
+    private val seeder: RegionContentSource
 ) {
     suspend operator fun invoke() {
         val regions = seeder.fetchRegions()
@@ -17,6 +17,6 @@ class SeedRegionsUseCase @Inject constructor(
 
         regionRepository.insertAll(regions)
         regionRepository.deleteNotIn(regions.map { it.id })
-        Timber.i("Seeded %d regions", regions.size)
+        Timber.i("Synced %d regions from Firestore", regions.size)
     }
 }
