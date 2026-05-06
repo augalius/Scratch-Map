@@ -6,9 +6,7 @@ import com.auggie.scratch_map_app.di.ApplicationScope
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
-import com.auggie.scratch_map_app.domain.usecase.SeedAchievementsUseCase
-import com.auggie.scratch_map_app.domain.usecase.SeedRegionsUseCase
-import com.auggie.scratch_map_app.domain.usecase.SeedWaypointsUseCase
+import com.auggie.scratch_map_app.domain.usecase.SeedContentUseCase
 import com.mapbox.common.MapboxOptions
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -20,13 +18,7 @@ import javax.inject.Inject
 class ScratchMapApp : Application() {
 
     @Inject
-    lateinit var seedWaypointsUseCase: SeedWaypointsUseCase
-
-    @Inject
-    lateinit var seedRegionsUseCase: SeedRegionsUseCase
-
-    @Inject
-    lateinit var seedAchievementsUseCase: SeedAchievementsUseCase
+    lateinit var seedContentUseCase: SeedContentUseCase
 
     @Inject
     lateinit var authRepository: AuthRepository
@@ -46,11 +38,6 @@ class ScratchMapApp : Application() {
         MapboxOptions.accessToken = BuildConfig.MAPBOX_ACCESS_TOKEN
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
-        appScope.launch {
-            seedWaypointsUseCase()
-            seedRegionsUseCase()
-            seedAchievementsUseCase()
-        }
         appScope.launch { migrateTilesOnce() }
         appScope.launch { restoreOnSignIn() }
     }
@@ -67,8 +54,12 @@ class ScratchMapApp : Application() {
     }
 
     /**
-     * Each time a user is first seen (app start while signed in, or a fresh sign-in): pull cloud
-     * progress down, push local tiles up, and update the profile summary.
+     * Each time a user is first seen (app start while signed in, or a fresh sign-in): refresh
+     * content, pull cloud progress down, push local tiles up, and update the profile summary.
+     *
+     * Seeding waits for sign-in because Firestore rules only let signed-in users read content.
+     * Seeding while signed out would fetch nothing yet still record the new content version,
+     * leaving a fresh install without content until the next publish.
      */
     private suspend fun restoreOnSignIn() {
         var lastRestoredUid: String? = null
@@ -76,6 +67,7 @@ class ScratchMapApp : Application() {
             if (user == null || user.uid == lastRestoredUid) return@collect
             lastRestoredUid = user.uid
             Timber.i("Auth: signed in as %s", user.uid)
+            seedContentUseCase()
             syncRepository.restoreTiles()
             syncRepository.restoreWaypointUnlocks()
             syncRepository.flushTiles()
