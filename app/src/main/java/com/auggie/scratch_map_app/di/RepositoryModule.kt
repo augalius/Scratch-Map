@@ -16,11 +16,13 @@ import com.auggie.scratch_map_app.data.remote.FirestoreAccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointContentSource
 import com.auggie.scratch_map_app.data.repository.AchievementRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
+import com.auggie.scratch_map_app.data.repository.TrailRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.WaypointRepositoryImpl
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import dagger.Binds
 import dagger.Module
@@ -45,6 +47,9 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds @Singleton
+    abstract fun bindTrailRepository(impl: TrailRepositoryImpl): TrailRepository
 
     @Binds @Singleton
     abstract fun bindSyncRepository(impl: FirestoreSyncService): SyncRepository

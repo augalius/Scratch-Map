@@ -7,11 +7,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.auggie.scratch_map_app.data.local.dao.AchievementDefinitionDao
 import com.auggie.scratch_map_app.data.local.dao.RegionDao
 import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
+import com.auggie.scratch_map_app.data.local.dao.TrailDao
 import com.auggie.scratch_map_app.data.local.dao.WaypointDao
 import com.auggie.scratch_map_app.data.local.entity.AchievementDefinitionEntity
 import com.auggie.scratch_map_app.data.local.entity.AchievementUnlockEntity
 import com.auggie.scratch_map_app.data.local.entity.RegionEntity
 import com.auggie.scratch_map_app.data.local.entity.ScratchTileEntity
+import com.auggie.scratch_map_app.data.local.entity.TrailCheckpointEntity
+import com.auggie.scratch_map_app.data.local.entity.TrailEntity
 import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
 
 
@@ -21,9 +24,11 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         WaypointEntity::class,
         RegionEntity::class,
         AchievementDefinitionEntity::class,
+        TrailEntity::class,
+        TrailCheckpointEntity::class,
         AchievementUnlockEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 
@@ -32,6 +37,7 @@ abstract class ScratchMapDatabase : RoomDatabase() {
     abstract fun waypointDao(): WaypointDao
     abstract fun regionDao(): RegionDao
     abstract fun achievementDefinitionDao(): AchievementDefinitionDao
+    abstract fun trailDao(): TrailDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -65,6 +71,39 @@ abstract class ScratchMapDatabase : RoomDatabase() {
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE regions ADD COLUMN boundary_json TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS trails (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        difficulty TEXT NOT NULL,
+                        estimated_distance_km REAL NOT NULL,
+                        is_completed INTEGER NOT NULL
+                    )
+                """
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS trail_checkpoints (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        trail_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        checkpoint_order INTEGER NOT NULL,
+                        unlock_radius_meters INTEGER NOT NULL,
+                        is_reached INTEGER NOT NULL,
+                        reached_at_millis INTEGER
+                    )
+                """
+                )
             }
         }
 

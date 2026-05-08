@@ -6,6 +6,7 @@ import com.auggie.scratch_map_app.data.local.ScratchMapDatabase
 import com.auggie.scratch_map_app.data.local.dao.AchievementDefinitionDao
 import com.auggie.scratch_map_app.data.local.dao.RegionDao
 import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
+import com.auggie.scratch_map_app.data.local.dao.TrailDao
 import com.auggie.scratch_map_app.data.local.dao.WaypointDao
 import dagger.Module
 import dagger.Provides
@@ -32,7 +33,8 @@ object DatabaseModule {
                 ScratchMapDatabase.MIGRATION_6_7,
                 ScratchMapDatabase.MIGRATION_7_8,
                 ScratchMapDatabase.MIGRATION_8_9,
-                ScratchMapDatabase.MIGRATION_9_10
+                ScratchMapDatabase.MIGRATION_9_10,
+                ScratchMapDatabase.MIGRATION_10_11
             )
             // No 1→2 migration exists, so v1 installs are recreated from scratch. Everything
             // from v2 onward migrates in place via the chain above.
@@ -59,4 +61,9 @@ object DatabaseModule {
     @Singleton
     fun provideAchievementDefinitionDao(database: ScratchMapDatabase): AchievementDefinitionDao =
         database.achievementDefinitionDao()
+
+    @Provides
+    @Singleton
+    fun provideTrailDao(database: ScratchMapDatabase): TrailDao =
+        database.trailDao()
 }
