@@ -28,7 +28,7 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         TrailCheckpointEntity::class,
         AchievementUnlockEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 
@@ -104,6 +104,46 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                     )
                 """
                 )
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS trails_new (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        difficulty TEXT NOT NULL,
+                        estimated_distance_km REAL NOT NULL,
+                        is_completed INTEGER NOT NULL
+                    )
+                """
+                )
+                db.execSQL("INSERT OR IGNORE INTO trails_new SELECT id, name, description, difficulty, estimated_distance_km, is_completed FROM trails")
+                db.execSQL("DROP TABLE trails")
+                db.execSQL("ALTER TABLE trails_new RENAME TO trails")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS trail_checkpoints_new (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        trail_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        checkpoint_order INTEGER NOT NULL,
+                        unlock_radius_meters INTEGER NOT NULL,
+                        is_reached INTEGER NOT NULL,
+                        reached_at_millis INTEGER
+                    )
+                """
+                )
+                db.execSQL("INSERT OR IGNORE INTO trail_checkpoints_new SELECT id, trail_id, name, description, latitude, longitude, checkpoint_order, unlock_radius_meters, is_reached, reached_at_millis FROM trail_checkpoints")
+                db.execSQL("DROP TABLE trail_checkpoints")
+                db.execSQL("ALTER TABLE trail_checkpoints_new RENAME TO trail_checkpoints")
             }
         }
 
