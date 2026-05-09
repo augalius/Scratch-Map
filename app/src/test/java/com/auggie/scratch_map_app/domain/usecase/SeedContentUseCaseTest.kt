@@ -4,6 +4,7 @@ import com.auggie.scratch_map_app.domain.repository.ContentVersionRepository
 import com.auggie.scratch_map_app.domain.usecase.SeedAchievementsUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedContentUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedRegionsUseCase
+import com.auggie.scratch_map_app.domain.usecase.SeedTrailsUseCase
 import com.auggie.scratch_map_app.domain.usecase.SeedWaypointsUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -16,6 +17,7 @@ class SeedContentUseCaseTest {
     private lateinit var seedRegions: SeedRegionsUseCase
     private lateinit var seedWaypoints: SeedWaypointsUseCase
     private lateinit var seedAchievements: SeedAchievementsUseCase
+    private lateinit var seedTrails: SeedTrailsUseCase
     private lateinit var useCase: SeedContentUseCase
 
     @Before
@@ -24,9 +26,10 @@ class SeedContentUseCaseTest {
         seedRegions = mock()
         seedWaypoints = mock()
         seedAchievements = mock()
+        seedTrails = mock()
         useCase = SeedContentUseCase(
             versionRepository,
-            seedRegions, seedWaypoints, seedAchievements
+            seedRegions, seedWaypoints, seedAchievements, seedTrails
         )
     }
 
@@ -39,6 +42,7 @@ class SeedContentUseCaseTest {
         verify(seedRegions, never()).invoke()
         verify(seedWaypoints, never()).invoke()
         verify(seedAchievements, never()).invoke()
+        verify(seedTrails, never()).invoke()
     }
 
     @Test
@@ -68,13 +72,14 @@ class SeedContentUseCaseTest {
 
 
     @Test
-    fun `remote greater than local calls all three seed use cases`() = runTest {
+    fun `remote greater than local calls all four seed use cases`() = runTest {
         whenever(versionRepository.getRemoteVersion()).thenReturn(6)
         whenever(versionRepository.getLocalVersion()).thenReturn(5)
         useCase()
         verify(seedRegions).invoke()
         verify(seedWaypoints).invoke()
         verify(seedAchievements).invoke()
+        verify(seedTrails).invoke()
     }
 
     @Test
@@ -89,11 +94,12 @@ class SeedContentUseCaseTest {
     fun `version is saved after seeding completes not before`() = runTest {
         whenever(versionRepository.getRemoteVersion()).thenReturn(6)
         whenever(versionRepository.getLocalVersion()).thenReturn(5)
-        val order = inOrder(seedRegions, seedWaypoints, seedAchievements, versionRepository)
+        val order = inOrder(seedRegions, seedWaypoints, seedAchievements, seedTrails, versionRepository)
         useCase()
         order.verify(seedRegions).invoke()
         order.verify(seedWaypoints).invoke()
         order.verify(seedAchievements).invoke()
+        order.verify(seedTrails).invoke()
         order.verify(versionRepository).saveLocalVersion(6)
     }
 

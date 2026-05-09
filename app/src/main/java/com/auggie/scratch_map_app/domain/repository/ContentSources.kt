@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app.domain.repository
 
 import com.auggie.scratch_map_app.domain.model.AchievementDefinition
 import com.auggie.scratch_map_app.domain.model.Region
+import com.auggie.scratch_map_app.domain.model.Trail
 import com.auggie.scratch_map_app.domain.model.Waypoint
 
 /**
@@ -17,6 +18,10 @@ interface RegionContentSource {
 
 interface WaypointContentSource {
     suspend fun fetchWaypoints(): List<Waypoint>
+}
+
+interface TrailContentSource {
+    suspend fun fetchTrails(): List<Trail>
 }
 
 interface AchievementContentSource {

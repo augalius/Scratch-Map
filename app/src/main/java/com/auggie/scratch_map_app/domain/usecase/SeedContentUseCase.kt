@@ -10,7 +10,8 @@ class SeedContentUseCase @Inject constructor(
     private val contentVersionRepository: ContentVersionRepository,
     private val seedRegions: SeedRegionsUseCase,
     private val seedWaypoints: SeedWaypointsUseCase,
-    private val seedAchievements: SeedAchievementsUseCase
+    private val seedAchievements: SeedAchievementsUseCase,
+    private val seedTrails: SeedTrailsUseCase
 ) {
     suspend operator fun invoke() {
         val remoteVersion = contentVersionRepository.getRemoteVersion()
@@ -25,6 +26,7 @@ class SeedContentUseCase @Inject constructor(
         seedRegions()
         seedWaypoints()
         seedAchievements()
+        seedTrails()
         contentVersionRepository.saveLocalVersion(remoteVersion)
     }
 }
