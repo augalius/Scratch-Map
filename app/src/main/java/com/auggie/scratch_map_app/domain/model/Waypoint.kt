@@ -1,7 +1,7 @@
 package com.auggie.scratch_map_app.domain.model
 
 enum class WaypointCategory {
-    CHURCH, MONUMENT, PARK, VIEWPOINT, MUSEUM, HISTORIC, LANDMARK, FORT, OTHER
+    CHURCH, MONUMENT, PARK, VIEWPOINT, MUSEUM, HISTORIC, LANDMARK, FORT, OTHER, TRAIL
 }
 
 data class Waypoint(

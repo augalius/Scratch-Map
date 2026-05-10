@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auggie.scratch_map_app.domain.model.RegionStats
+import com.auggie.scratch_map_app.domain.model.Trail
 import com.auggie.scratch_map_app.ui.components.AchievementCard
 import com.auggie.scratch_map_app.ui.components.ExplorationProgressBar
 
@@ -104,6 +108,20 @@ private fun RegionDetailContent(
             RegionHeaderCard(stats)
         }
 
+        if (stats.trails.isNotEmpty()) {
+            item {
+                Text(
+                    "Trails",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                )
+            }
+            items(stats.trails) { trail ->
+                TrailCard(trail = trail)
+            }
+        }
+
         item {
             Text(
                 "Achievements",
@@ -171,6 +189,12 @@ private fun RegionHeaderCard(stats: RegionStats) {
                     label = "Waypoints",
                     value = "${stats.waypointsUnlocked}/${stats.waypointsTotal}"
                 )
+                if (stats.trails.isNotEmpty()) {
+                    StatChip(
+                        label = "Trails",
+                        value = "${stats.trails.count { it.isCompleted }}/${stats.trails.size}"
+                    )
+                }
                 StatChip(
                     label = "Achievements",
                     value = "${stats.achievements.count { it.isUnlocked }}/${stats.achievements.size}"
@@ -194,5 +218,52 @@ private fun StatChip(label: String, value: String) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun TrailCard(trail: Trail) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    trail.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "${trail.difficulty.name.lowercase().replaceFirstChar { it.uppercase() }} · " +
+                            "${"%.1f".format(trail.estimatedDistanceKm)} km · " +
+                            "${trail.reachedCount}/${trail.checkpoints.size} checkpoints",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = if (trail.isCompleted) Icons.Default.CheckCircle else Icons.Default.Lock,
+                contentDescription = null,
+                tint = if (trail.isCompleted) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }

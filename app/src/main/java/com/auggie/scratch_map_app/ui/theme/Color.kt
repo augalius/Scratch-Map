@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.auggie.scratch_map_app.domain.model.TrailDifficulty
 
 /**
  * `#RRGGBB` form, for Mapbox style JSON and paint properties — they cannot take a Compose [Color],
@@ -31,3 +32,18 @@ val LightOnSurface = Color(0xFF1E293B)
 val Error = Color(0xFFEF4444)
 val OnError = Color.White
 val FogColor = Color(0xFF1A1A2E)
+
+// Status / marker palette (shared across map + trail UI)
+val MarkerGreen = Color(0xFF4CAF50)
+val WarningOrange = Color(0xFFFF9800)
+val DangerRed = Color(0xFFF44336)
+val BannerWarning = Color(0xFFE65100)
+val BannerInfo = Color(0xFF1976D2)
+
+/** Color used to represent a trail's difficulty across the UI. */
+val TrailDifficulty.color: Color
+    get() = when (this) {
+        TrailDifficulty.EASY -> MarkerGreen
+        TrailDifficulty.MEDIUM -> WarningOrange
+        TrailDifficulty.HARD -> DangerRed
+    }

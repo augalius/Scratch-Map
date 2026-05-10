@@ -1,6 +1,7 @@
 package com.auggie.scratch_map_app.ui.map.fog
 
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.Trail
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.ui.map.colorHex
 import com.auggie.scratch_map_app.ui.theme.FogColor
@@ -51,11 +52,18 @@ object FogLayerManager {
     suspend fun buildStyleJson(
         tiles: List<ScratchTile>,
         isDark: Boolean = false,
-        waypoints: List<Waypoint> = emptyList()
+        waypoints: List<Waypoint> = emptyList(),
+        trails: List<Trail> = emptyList()
     ): String = withContext(Dispatchers.Default) {
+        val trailFeatures = buildTrailFeatures(trails)
+        Timber.d(
+            "FogLayer: building style with %d trails, %d with valid coords",
+            trails.size, trailFeatures.size
+        )
         MapStyleBuilder.build(
             fogJson = buildFogGeoJson(tiles).toJson(),
             waypointJson = FeatureCollection.fromFeatures(buildWaypointFeatures(waypoints)).toJson(),
+            trailJson = FeatureCollection.fromFeatures(trailFeatures).toJson(),
             fogSourceId = SOURCE_ID,
             fogLayerId = LAYER_ID,
             fogColor = FOG_COLOR,
@@ -100,6 +108,9 @@ object FogLayerManager {
         updateSource(style, "waypoint-source", buildWaypointFeatures(waypoints))
     }
 
+    fun updateTrails(style: Style, trails: List<Trail>) {
+        updateSource(style, "trail-source", buildTrailFeatures(trails))
+    }
 
     private fun updateSource(style: Style, sourceId: String, features: List<Feature>) {
         try {
@@ -120,4 +131,16 @@ object FogLayerManager {
             }
         }
 
+    private fun buildTrailFeatures(trails: List<Trail>): List<Feature> =
+        trails.mapNotNull { trail ->
+            val lat = trail.startLat ?: return@mapNotNull null
+            val lng = trail.startLng ?: return@mapNotNull null
+            Feature.fromGeometry(Point.fromLngLat(lng, lat)).apply {
+                addStringProperty("trail_id", trail.id)
+                addStringProperty("name", trail.name)
+                addStringProperty("difficulty", trail.difficulty.name)
+                addNumberProperty("progress", trail.progress)
+                addBooleanProperty("is_completed", trail.isCompleted)
+            }
+        }
 }

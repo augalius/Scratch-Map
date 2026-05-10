@@ -3,6 +3,7 @@ package com.auggie.scratch_map_app.ui.map
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Church
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Fort
 import androidx.compose.material.icons.filled.HistoryEdu
 import androidx.compose.material.icons.filled.Landscape
@@ -29,6 +30,7 @@ val WaypointCategory.icon: ImageVector
         WaypointCategory.LANDMARK -> Icons.Default.Place
         WaypointCategory.FORT -> Icons.Default.Fort
         WaypointCategory.OTHER -> Icons.Default.Room
+        WaypointCategory.TRAIL -> Icons.AutoMirrored.Filled.DirectionsWalk
     }
 
 /** Marker color as a `#RRGGBB` hex string (parse with `android.graphics.Color.parseColor`). */
@@ -43,4 +45,5 @@ val WaypointCategory.colorHex: String
         WaypointCategory.LANDMARK -> "#E91E63"
         WaypointCategory.FORT -> "#546E7A"
         WaypointCategory.OTHER -> "#607D8B"
+        WaypointCategory.TRAIL -> "#4CAF50"
     }

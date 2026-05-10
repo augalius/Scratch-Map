@@ -3,6 +3,7 @@ package com.auggie.scratch_map_app.ui.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.domain.model.RegionStats
 import com.auggie.scratch_map_app.domain.usecase.GetRegionStatsUseCase
@@ -14,6 +15,7 @@ import javax.inject.Inject
 data class GlobalStats(
     val totalAreaKm2: Double = 0.0,
     val totalWaypointsUnlocked: Int = 0,
+    val totalTrailsCompleted: Int = 0,
     val regionsVisited: Int = 0
 )
 
@@ -26,7 +28,8 @@ data class StatsUiState(
 class StatsViewModel @Inject constructor(
     private val getRegionStatsUseCase: GetRegionStatsUseCase,
     private val tileRepository: ScratchTileRepository,
-    private val waypointRepository: WaypointRepository
+    private val waypointRepository: WaypointRepository,
+    private val trailRepository: TrailRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatsUiState())
@@ -46,11 +49,13 @@ class StatsViewModel @Inject constructor(
         combine(
             tileRepository.observeTileCount(),
             waypointRepository.observeUnlockedCount(),
+            trailRepository.observeAll(),
             regionStats
-        ) { totalTiles, totalWaypoints, stats ->
+        ) { totalTiles, totalWaypoints, trails, stats ->
             GlobalStats(
                 totalAreaKm2 = totalTiles * tileAreaKm2,
                 totalWaypointsUnlocked = totalWaypoints,
+                totalTrailsCompleted = trails.count { it.isCompleted },
                 regionsVisited = stats.count { it.progress > 0.0 }
             )
         }

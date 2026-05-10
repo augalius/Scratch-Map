@@ -60,6 +60,12 @@ fun StatsScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     StatCard(
                         modifier = Modifier.weight(1f),
+                        icon = Icons.AutoMirrored.Filled.DirectionsWalk,
+                        label = "Trails completed",
+                        value = "${gs.totalTrailsCompleted}"
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
                         icon = Icons.Default.Public,
                         label = "Regions visited",
                         value = "${gs.regionsVisited}"

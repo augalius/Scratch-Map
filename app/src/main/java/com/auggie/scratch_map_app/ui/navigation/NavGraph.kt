@@ -16,6 +16,7 @@ import com.auggie.scratch_map_app.ui.auth.AuthViewModel
 import com.auggie.scratch_map_app.ui.map.MapScreen
 import com.auggie.scratch_map_app.ui.stats.RegionDetailScreen
 import com.auggie.scratch_map_app.ui.stats.StatsScreen
+import com.auggie.scratch_map_app.ui.trail.TrailMapScreen
 
 @Composable
 fun ScratchMapNavHost(
@@ -45,7 +46,11 @@ fun ScratchMapNavHost(
     ) {
         composable(Screen.Auth.route) { AuthScreen(authViewModel) }
 
-        composable(Screen.Map.route) { MapScreen() }
+        composable(Screen.Map.route) {
+            MapScreen(onTrailStart = { trailId ->
+                navController.navigate(Screen.Trail.route(trailId))
+            })
+        }
         composable(Screen.Stats.route) {
             StatsScreen(onRegionClick = { regionId ->
                 navController.navigate(Screen.RegionDetail.route(regionId))
@@ -59,6 +64,20 @@ fun ScratchMapNavHost(
                 regionId = backStackEntry.arguments?.getString("regionId") ?: "",
                 onBack = { navController.popBackStack() },
                 onBottomBarVisibilityChanged = onBottomBarVisibilityChanged
+            )
+        }
+        composable(
+            route = Screen.Trail.route,
+            arguments = listOf(navArgument("trailId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val trailId = backStackEntry.arguments?.getString("trailId") ?: ""
+            LaunchedEffect(Unit) { onBottomBarVisibilityChanged(false) }
+            TrailMapScreen(
+                trailId = trailId,
+                onBack = {
+                    onBottomBarVisibilityChanged(true)
+                    navController.popBackStack()
+                }
             )
         }
     }

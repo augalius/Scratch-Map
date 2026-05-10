@@ -7,4 +7,8 @@ sealed class Screen(val route: String) {
     data object RegionDetail : Screen("region/{regionId}") {
         fun route(regionId: String) = "region/$regionId"
     }
+
+    data object Trail : Screen("trail/{trailId}") {
+        fun route(trailId: String) = "trail/$trailId"
+    }
 }

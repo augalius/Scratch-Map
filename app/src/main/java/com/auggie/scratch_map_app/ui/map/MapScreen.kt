@@ -5,11 +5,14 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import com.auggie.scratch_map_app.ui.theme.FogColor
+import com.auggie.scratch_map_app.ui.theme.MarkerGreen
+import com.auggie.scratch_map_app.ui.theme.color
 import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +42,8 @@ import com.mapbox.maps.plugin.gestures.gestures
 
 @Composable
 fun MapScreen(
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    onTrailStart: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isDark = isSystemInDarkTheme()
@@ -69,24 +73,30 @@ fun MapScreen(
 
     val revealedTiles = uiState.revealedTiles
     val waypoints = uiState.waypoints
+    val trails = uiState.trails
 
     var fogStyleJson by remember { mutableStateOf<String?>(null) }
     var initialStyleLoaded by remember { mutableStateOf(false) }
     val waypointsRef =
         remember { mutableStateOf<List<com.auggie.scratch_map_app.domain.model.Waypoint>>(emptyList()) }
+    val trailsRef =
+        remember { mutableStateOf<List<com.auggie.scratch_map_app.domain.model.Trail>>(emptyList()) }
     LaunchedEffect(waypoints) { waypointsRef.value = waypoints }
+    LaunchedEffect(trails) { trailsRef.value = trails }
 
-    LaunchedEffect(revealedTiles, isDark, waypoints, initialStyleLoaded) {
+    LaunchedEffect(revealedTiles, isDark, waypoints, trails, initialStyleLoaded) {
         if (!initialStyleLoaded) {
             fogStyleJson = FogLayerManager.buildStyleJson(
                 revealedTiles,
                 isDark,
-                waypoints
+                waypoints,
+                trails
             )
         } else {
             val style = mapStyleRef ?: return@LaunchedEffect
             FogLayerManager.applyFogLayer(style, FogLayerManager.buildFogGeoJson(revealedTiles))
             FogLayerManager.updateWaypoints(style, waypoints)
+            FogLayerManager.updateTrails(style, trails)
         }
     }
 
@@ -186,7 +196,7 @@ fun MapScreen(
                             override fun onScaleEnd(detector: com.mapbox.android.gestures.StandardScaleGestureDetector) {}
                         })
 
-                        // Tap on waypoint
+                        // Tap on waypoint or trail
                         mapboxMap.addOnMapClickListener { point ->
                             val screen = mapboxMap.pixelForCoordinate(point)
                             val geometry =
@@ -203,6 +213,22 @@ fun MapScreen(
                                 val found =
                                     waypointsRef.value.find { it.name == name && it.isUnlocked }
                                 if (found != null) viewModel.showWaypointPopup(found)
+                            }
+
+                            mapboxMap.queryRenderedFeatures(
+                                geometry,
+                                RenderedQueryOptions(
+                                    listOf("trail-active", "trail-completed"),
+                                    null
+                                )
+                            ) { result ->
+                                val feature =
+                                    result.value?.firstOrNull() ?: return@queryRenderedFeatures
+                                val trailId =
+                                    feature.queriedFeature.feature.getStringProperty("trail_id")
+                                        ?: return@queryRenderedFeatures
+                                val found = trailsRef.value.find { it.id == trailId }
+                                if (found != null) viewModel.showTrailPopup(found)
                             }
 
                             false
@@ -263,6 +289,17 @@ fun MapScreen(
         WaypointUnlockedDialog(
             waypoint = waypoint,
             onDismiss = { viewModel.clearSelectedWaypoint() }
+        )
+    }
+
+    uiState.selectedTrail?.let { trail ->
+        TrailInfoDialog(
+            trail = trail,
+            onDismiss = { viewModel.clearSelectedTrail() },
+            onStart = {
+                viewModel.clearSelectedTrail()
+                onTrailStart(trail.id)
+            }
         )
     }
 }
@@ -390,3 +427,89 @@ private fun WaypointUnlockedDialog(
         }
     }
 }
+
+@Composable
+private fun TrailInfoDialog(
+    trail: com.auggie.scratch_map_app.domain.model.Trail,
+    onDismiss: () -> Unit,
+    onStart: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.DirectionsWalk,
+                        null,
+                        tint = MarkerGreen,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Text(
+                        trail.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+                val diffColor = trail.difficulty.color
+                Text(
+                    trail.difficulty.name.lowercase().replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = diffColor
+                )
+                if (trail.estimatedDistanceKm > 0.0) {
+                    Text(
+                        "%.1f km · %d checkpoints".format(
+                            trail.estimatedDistanceKm,
+                            trail.checkpoints.size
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (trail.description.isNotBlank()) {
+                    Text(
+                        trail.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (trail.checkpoints.isNotEmpty()) {
+                    LinearProgressIndicator(
+                        progress = { trail.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MarkerGreen
+                    )
+                    Text(
+                        "${trail.reachedCount} / ${trail.checkpoints.size} checkpoints reached",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Close") }
+                    Button(
+                        onClick = onStart,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MarkerGreen)
+                    ) {
+                        Text(if (trail.isCompleted) "View" else "Start")
+                    }
+                }
+            }
+        }
+    }
+}
+

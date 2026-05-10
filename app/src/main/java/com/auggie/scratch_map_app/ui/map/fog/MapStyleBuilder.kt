@@ -1,6 +1,7 @@
 package com.auggie.scratch_map_app.ui.map.fog
 
 import com.auggie.scratch_map_app.ui.theme.FogColor
+import com.auggie.scratch_map_app.ui.theme.MarkerGreen
 import com.auggie.scratch_map_app.ui.theme.toHexString
 
 /**
@@ -54,12 +55,14 @@ internal object MapStyleBuilder {
     fun build(
         fogJson: String,
         waypointJson: String,
+        trailJson: String,
         fogSourceId: String,
         fogLayerId: String,
         fogColor: String,
         isDark: Boolean
     ): String {
         val p = if (isDark) dark else light
+        val trailLabelColor = MarkerGreen.toHexString()
 
         return """
         {
@@ -77,6 +80,10 @@ internal object MapStyleBuilder {
             "waypoint-source": {
               "type": "geojson",
               "data": $waypointJson
+            },
+            "trail-source": {
+              "type": "geojson",
+              "data": $trailJson
             }
           },
           "layers": [
@@ -183,7 +190,7 @@ internal object MapStyleBuilder {
               "id": "waypoint-unlocked",
               "type": "symbol",
               "source": "waypoint-source",
-              "filter": ["==", ["get", "unlocked"], true],
+              "filter": ["all", ["==", ["get", "unlocked"], true], ["!=", ["get", "category"], "TRAIL"]],
               "minzoom": 11,
               "layout": {
                 "icon-image": ["concat", "waypoint-", ["get", "category"]],
@@ -211,7 +218,7 @@ internal object MapStyleBuilder {
               "id": "waypoint-locked",
               "type": "symbol",
               "source": "waypoint-source",
-              "filter": ["==", ["get", "unlocked"], false],
+              "filter": ["all", ["==", ["get", "unlocked"], false], ["!=", ["get", "category"], "TRAIL"]],
               "minzoom": 11,
               "layout": {
                 "icon-image": ["concat", "waypoint-locked-", ["get", "category"]],
@@ -220,6 +227,47 @@ internal object MapStyleBuilder {
                 "icon-allow-overlap": true,
                 "icon-ignore-placement": true,
                 "symbol-avoid-edges": false
+              }
+            },
+            {
+              "id": "trail-active",
+              "type": "symbol",
+              "source": "trail-source",
+              "filter": ["==", ["get", "is_completed"], false],
+              "minzoom": 11,
+              "layout": {
+                "icon-image": "waypoint-trail-active",
+                "icon-size": 1.0,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true
+              }
+            },
+            {
+              "id": "trail-completed",
+              "type": "symbol",
+              "source": "trail-source",
+              "filter": ["==", ["get", "is_completed"], true],
+              "minzoom": 11,
+              "layout": {
+                "icon-image": "waypoint-TRAIL",
+                "icon-size": 0.75,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "text-field": ["get", "name"],
+                "text-font": ["DIN Pro Medium", "Arial Unicode MS Regular"],
+                "text-size": 11,
+                "text-offset": [0, 0.3],
+                "text-anchor": "top",
+                "text-allow-overlap": false,
+                "text-ignore-placement": false
+              },
+              "paint": {
+                "text-color": "$trailLabelColor",
+                "text-halo-color": "${p.labelHalo}",
+                "text-halo-width": 1.5,
+                "text-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0, 12, 1]
               }
             }
           ]

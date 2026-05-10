@@ -7,11 +7,13 @@ import com.auggie.scratch_map_app.domain.model.Region
 import com.auggie.scratch_map_app.domain.model.StageTarget
 import com.auggie.scratch_map_app.domain.model.RegionStats
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.Trail
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.model.WaypointCategory
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.util.TileCalculator
 import com.auggie.scratch_map_app.util.isInsidePolygon
@@ -27,6 +29,7 @@ class GetRegionStatsUseCase @Inject constructor(
     private val regionRepository: RegionRepository,
     private val tileRepository: ScratchTileRepository,
     private val waypointRepository: WaypointRepository,
+    private val trailRepository: TrailRepository,
     private val achievementRepository: AchievementRepository
 ) {
     operator fun invoke(): Flow<List<RegionStats>> =
@@ -39,6 +42,7 @@ class GetRegionStatsUseCase @Inject constructor(
             combine(
                 tileFlows +
                         waypointRepository.observeAll() +
+                        trailRepository.observeAll() +
                         achievementRepository.observeDefinitions()
             ) { values ->
                 @Suppress("UNCHECKED_CAST")
@@ -48,7 +52,10 @@ class GetRegionStatsUseCase @Inject constructor(
                 val allWaypoints = values[regions.size] as List<Waypoint>
 
                 @Suppress("UNCHECKED_CAST")
-                val allDefinitions = values[regions.size + 1] as List<AchievementDefinition>
+                val allTrails = values[regions.size + 1] as List<Trail>
+
+                @Suppress("UNCHECKED_CAST")
+                val allDefinitions = values[regions.size + 2] as List<AchievementDefinition>
 
                 regions.mapIndexed { i, region ->
                     val boundary = region.boundaryPoints
@@ -60,6 +67,12 @@ class GetRegionStatsUseCase @Inject constructor(
                         )
                         else wp.latitude in region.minLat..region.maxLat &&
                                 wp.longitude in region.minLng..region.maxLng
+                    }
+                    val trails = allTrails.filter { trail ->
+                        val lat = trail.startLat ?: return@filter false
+                        val lng = trail.startLng ?: return@filter false
+                        if (boundary.isNotEmpty()) isInsidePolygon(lat, lng, boundary)
+                        else lat in region.minLat..region.maxLat && lng in region.minLng..region.maxLng
                     }
                     val tiles = if (boundary.isNotEmpty())
                         tileLists[i].count { isInsidePolygon(it.centerLat, it.centerLng, boundary) }
@@ -81,6 +94,7 @@ class GetRegionStatsUseCase @Inject constructor(
                         tilesRevealed = tiles,
                         waypointsUnlocked = wps.count { it.isUnlocked },
                         waypointsTotal = wps.size,
+                        trails = trails,
                         achievements = buildAchievements(region, tiles, wps, applicableDefs),
                         revealedAreaKm2 = tiles * tileAreaKm2,
                         goalAreaKm2 = region.goalTiles * tileAreaKm2

@@ -4,11 +4,14 @@ import com.auggie.scratch_map_app.domain.model.AchievementDefinition
 import com.auggie.scratch_map_app.domain.model.Region
 import com.auggie.scratch_map_app.domain.model.ScratchTile
 import com.auggie.scratch_map_app.domain.model.StageTarget
+import com.auggie.scratch_map_app.domain.model.Trail
+import com.auggie.scratch_map_app.domain.model.TrailCheckpoint
 import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.model.WaypointCategory
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.domain.usecase.GetRegionStatsUseCase
 import kotlinx.coroutines.flow.first
@@ -24,6 +27,7 @@ class GetRegionStatsUseCaseTest {
     private lateinit var regionRepository: RegionRepository
     private lateinit var tileRepository: ScratchTileRepository
     private lateinit var waypointRepository: WaypointRepository
+    private lateinit var trailRepository: TrailRepository
     private lateinit var achievementRepository: AchievementRepository
     private lateinit var useCase: GetRegionStatsUseCase
 
@@ -54,6 +58,20 @@ class GetRegionStatsUseCaseTest {
     private fun tile(lat: Double, lng: Double) =
         ScratchTile(tileX = 0, tileY = 0, zoomLevel = 16, centerLat = lat, centerLng = lng)
 
+    private fun trail(id: String, lat: Double, lng: Double) = Trail(
+        id = id, name = "Trail $id",
+        checkpoints = listOf(
+            TrailCheckpoint(
+                id = "cp_$id",
+                trailId = id,
+                name = "Start",
+                latitude = lat,
+                longitude = lng,
+                order = 1
+            )
+        )
+    )
+
     private fun def(
         id: String, metricType: String,
         targetValue: Long = 100L,
@@ -73,6 +91,7 @@ class GetRegionStatsUseCaseTest {
         regions: List<Region> = listOf(region),
         tiles: List<ScratchTile> = emptyList(),
         waypoints: List<Waypoint> = emptyList(),
+        trails: List<Trail> = emptyList(),
         defs: List<AchievementDefinition> = emptyList()
     ) {
         whenever(regionRepository.observeAll()).thenReturn(flowOf(regions))
@@ -82,6 +101,7 @@ class GetRegionStatsUseCaseTest {
             )
         )
         whenever(waypointRepository.observeAll()).thenReturn(flowOf(waypoints))
+        whenever(trailRepository.observeAll()).thenReturn(flowOf(trails))
         whenever(achievementRepository.observeDefinitions()).thenReturn(flowOf(defs))
     }
 
@@ -90,11 +110,13 @@ class GetRegionStatsUseCaseTest {
         regionRepository = mock()
         tileRepository = mock()
         waypointRepository = mock()
+        trailRepository = mock()
         achievementRepository = mock()
         useCase = GetRegionStatsUseCase(
             regionRepository,
             tileRepository,
             waypointRepository,
+            trailRepository,
             achievementRepository
         )
     }
@@ -195,7 +217,17 @@ class GetRegionStatsUseCaseTest {
     }
 
 
+    @Test
+    fun `trail with start inside region is included`() = runTest {
+        setup(trails = listOf(trail("t1", 54.685, 25.285)))
+        assertEquals(1, useCase().first()[0].trails.size)
+    }
 
+    @Test
+    fun `trail with start outside region is excluded`() = runTest {
+        setup(trails = listOf(trail("t1", 54.60, 25.20)))
+        assertTrue(useCase().first()[0].trails.isEmpty())
+    }
 
 
     @Test
@@ -311,6 +343,7 @@ class GetRegionStatsUseCaseTest {
             )
         )
         whenever(waypointRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        whenever(trailRepository.observeAll()).thenReturn(flowOf(emptyList()))
         whenever(achievementRepository.observeDefinitions()).thenReturn(flowOf(emptyList()))
         val result = useCase().first()
         assertEquals(2, result.size)

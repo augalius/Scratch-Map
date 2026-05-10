@@ -17,6 +17,7 @@ data class RegionStats(
     val tilesRevealed: Long,
     val waypointsUnlocked: Int,
     val waypointsTotal: Int,
+    val trails: List<Trail>,
     val achievements: List<Achievement>,
     val revealedAreaKm2: Double = 0.0,
     val goalAreaKm2: Double = 0.0

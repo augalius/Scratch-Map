@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.Trail
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.model.Waypoint
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
@@ -30,7 +32,9 @@ data class MapUiState(
     val shouldCenterOnUser: Boolean = false,
     val isFollowing: Boolean = false,
     val lastUnlockedWaypoint: Waypoint? = null,
-    val selectedWaypoint: Waypoint? = null
+    val selectedWaypoint: Waypoint? = null,
+    val trails: List<Trail> = emptyList(),
+    val selectedTrail: Trail? = null
 )
 
 @HiltViewModel
@@ -40,7 +44,8 @@ class MapViewModel @Inject constructor(
     private val locationClient: LocationClient,
     private val serviceStatusTracker: ServiceStatusTracker,
     private val revealTilesUseCase: RevealTilesUseCase,
-    private val waypointRepository: WaypointRepository
+    private val waypointRepository: WaypointRepository,
+    private val trailRepository: TrailRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -59,6 +64,7 @@ class MapViewModel @Inject constructor(
     init {
         observeAllRevealedTiles()
         observeWaypoints()
+        observeTrails()
         observeWaypointUnlocks()
         observeServiceStatus()
         checkPermissions()
@@ -84,8 +90,21 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    private fun observeTrails() {
+        viewModelScope.launch {
+            trailRepository.observeAll().collect { trails ->
+                _uiState.update { it.copy(trails = trails) }
+            }
+        }
+    }
 
+    fun showTrailPopup(trail: Trail) {
+        _uiState.update { it.copy(selectedTrail = trail) }
+    }
 
+    fun clearSelectedTrail() {
+        _uiState.update { it.copy(selectedTrail = null) }
+    }
 
     private fun observeWaypointUnlocks() {
         viewModelScope.launch {

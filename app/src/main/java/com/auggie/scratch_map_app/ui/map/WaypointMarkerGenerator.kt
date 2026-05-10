@@ -30,6 +30,11 @@ object WaypointMarkerGenerator {
             )
             style.addImage("waypoint-locked-${category.name}", locked)
         }
+        // Yellow pin for unlocked but incomplete trail
+        val trailActive = createMarkerBitmap(
+            Color.parseColor("#FFC107"), LOCKED_SIZE, WaypointCategory.TRAIL, locked = false
+        )
+        style.addImage("waypoint-trail-active", trailActive)
     }
 
     private fun createMarkerBitmap(

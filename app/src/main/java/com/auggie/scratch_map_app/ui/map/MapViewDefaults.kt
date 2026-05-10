@@ -7,7 +7,8 @@ import com.mapbox.maps.plugin.logo.logo
 import com.mapbox.maps.plugin.scalebar.scalebar
 
 /**
- * Chrome for the scratch map: hide Mapbox's built-in overlays and set up the location puck.
+ * Chrome shared by the scratch map and the trail map: hide Mapbox's built-in overlays and set up
+ * the location puck. Centralised so the two screens cannot drift apart.
  */
 internal fun MapView.applyScratchMapChrome(locationEnabled: Boolean) {
     location.enabled = locationEnabled
