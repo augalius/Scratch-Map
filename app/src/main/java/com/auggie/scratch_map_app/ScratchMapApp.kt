@@ -70,6 +70,7 @@ class ScratchMapApp : Application() {
             seedContentUseCase()
             syncRepository.restoreTiles()
             syncRepository.restoreWaypointUnlocks()
+            syncRepository.restoreTrailCompletions()
             syncRepository.flushTiles()
             syncRepository.upsertProfile()
         }

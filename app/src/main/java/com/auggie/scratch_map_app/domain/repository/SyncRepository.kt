@@ -1,7 +1,7 @@
 package com.auggie.scratch_map_app.domain.repository
 
 /**
- * Two-way sync of user progress (revealed tiles, waypoint unlocks)
+ * Two-way sync of user progress (revealed tiles, waypoint unlocks, trail completions)
  * with the remote backend.
  */
 interface SyncRepository {
@@ -13,6 +13,9 @@ interface SyncRepository {
 
     suspend fun syncWaypointUnlock(stringId: String, unlockedAt: Long)
     suspend fun restoreWaypointUnlocks()
+
+    suspend fun syncTrailCompletion(trailId: String, completedAt: Long)
+    suspend fun restoreTrailCompletions()
 
     /**
      * Writes the signed-in user's profile summary (email, last activity, app version, progress

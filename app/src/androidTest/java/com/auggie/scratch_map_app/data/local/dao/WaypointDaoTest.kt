@@ -103,7 +103,7 @@ class WaypointDaoTest {
     @Test
     fun deleteNotIn_removesWaypointsNotInList() = runTest {
         dao.insertAll(listOf(church, monument))
-        dao.deleteNotIn(listOf("church_1"))
+        dao.deleteNotIn(listOf("church_1"), "trail_%")
         assertNull(dao.getByStringId("monument_1"))
         assertNotNull(dao.getByStringId("church_1"))
     }

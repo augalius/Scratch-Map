@@ -8,6 +8,7 @@ import com.auggie.scratch_map_app.domain.model.TrailCheckpoint
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.TrailRepository
+import com.auggie.scratch_map_app.domain.usecase.CompleteTrailUseCase
 import com.auggie.scratch_map_app.domain.location.LocationClient
 import com.auggie.scratch_map_app.util.TileCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +33,8 @@ data class TrailUiState(
 class TrailViewModel @Inject constructor(
     private val trailRepository: TrailRepository,
     private val tileRepository: ScratchTileRepository,
-    private val locationClient: LocationClient
+    private val locationClient: LocationClient,
+    private val completeTrailUseCase: CompleteTrailUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrailUiState())
@@ -93,6 +95,11 @@ class TrailViewModel @Inject constructor(
         viewModelScope.launch {
             trailRepository.markCheckpointReached(checkpoint.id)
             _uiState.update { it.copy(lastReachedCheckpoint = checkpoint) }
+            val trail = _uiState.value.trail ?: return@launch
+            val unreachedCount = trail.checkpoints.count { !it.isReached && it.id != checkpoint.id }
+            if (unreachedCount == 0) {
+                completeTrailUseCase(trail)
+            }
         }
     }
 

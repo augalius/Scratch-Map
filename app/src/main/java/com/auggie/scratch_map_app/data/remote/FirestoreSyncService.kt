@@ -2,10 +2,12 @@ package com.auggie.scratch_map_app.data.remote
 
 import com.auggie.scratch_map_app.BuildConfig
 import com.auggie.scratch_map_app.domain.model.ScratchTile
+import com.auggie.scratch_map_app.domain.model.Waypoint
 import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
+import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import com.auggie.scratch_map_app.util.TileCalculator
 import com.google.firebase.Timestamp
@@ -30,7 +32,8 @@ class FirestoreSyncService @Inject constructor(
     private val authRepository: AuthRepository,
     private val accountStatus: AccountStatusRepository,
     private val tileRepository: ScratchTileRepository,
-    private val waypointRepository: WaypointRepository
+    private val waypointRepository: WaypointRepository,
+    private val trailRepository: TrailRepository
 ) : SyncRepository {
     companion object {
         private const val CHUNK_SIZE = 5_000
@@ -163,13 +166,36 @@ class FirestoreSyncService @Inject constructor(
         }
     }
 
+    override suspend fun syncTrailCompletion(trailId: String, completedAt: Long) {
+        val uid = writableUid() ?: return
+        firestore.collection("users").document(uid)
+            .collection("trails").document(trailId)
+            .set(
+                mapOf("completedAt" to completedAt, "trailId" to trailId, "uid" to uid),
+                SetOptions.merge()
+            )
+            .await()
+    }
 
+    override suspend fun restoreTrailCompletions() {
+        val uid = authRepository.currentUser?.uid ?: return
+        val docs = firestore.collection("users").document(uid)
+            .collection("trails").get().await()
+        docs.documents.forEach { doc ->
+            trailRepository.markAllCheckpointsReached(doc.id)
+            trailRepository.markTrailCompleted(doc.id)
+        }
+    }
 
     override suspend fun upsertProfile() {
         val uid = writableUid() ?: return
         runCatching {
             val user = firebaseAuth.currentUser
-            val unlockedWaypoints = waypointRepository.observeAll().first().count { it.isUnlocked }
+            val unlockedWaypoints = waypointRepository.observeAll().first().count {
+                // Trail-completion markers are generated on the device, not real locations.
+                it.isUnlocked && !it.stringId.startsWith(Waypoint.TRAIL_ID_PREFIX)
+            }
+            val completedTrails = trailRepository.observeAll().first().count { it.isCompleted }
 
             // Never includes `disabled` – only the backend may change it.
             val profile = buildMap<String, Any> {
@@ -181,7 +207,8 @@ class FirestoreSyncService @Inject constructor(
                 put(
                     "stats", mapOf(
                         "tiles" to tileRepository.getTotalTileCount(),
-                        "waypoints" to unlockedWaypoints
+                        "waypoints" to unlockedWaypoints,
+                        "trails" to completedTrails
                     )
                 )
                 user?.metadata?.creationTimestamp?.let { put("createdAt", Timestamp(Date(it))) }

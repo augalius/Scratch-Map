@@ -48,7 +48,7 @@ class WaypointRepositoryImpl @Inject constructor(
         )
 
     override suspend fun deleteNotIn(stringIds: List<String>) =
-        dao.deleteNotIn(stringIds)
+        dao.deleteNotIn(stringIds, "${Waypoint.TRAIL_ID_PREFIX}%")
 
     override suspend fun markUnlocked(id: Long) =
         dao.markUnlocked(id)

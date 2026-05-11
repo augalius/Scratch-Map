@@ -59,7 +59,15 @@ interface WaypointDao {
         unlockRadiusMeters: Int, imageUrl: String
     )
 
-    /** Drops waypoints no longer present in remote content. */
-    @Query("DELETE FROM waypoints WHERE string_id NOT IN (:stringIds)")
-    suspend fun deleteNotIn(stringIds: List<String>)
+    /**
+     * Drops waypoints no longer present in remote content. [localPrefix] is a SQL LIKE pattern
+     * shielding locally created waypoints (trail completions) from being swept away by a
+     * content-version bump.
+     */
+    @Query(
+        """DELETE FROM waypoints
+        WHERE string_id NOT IN (:stringIds)
+        AND string_id NOT LIKE :localPrefix"""
+    )
+    suspend fun deleteNotIn(stringIds: List<String>, localPrefix: String)
 }

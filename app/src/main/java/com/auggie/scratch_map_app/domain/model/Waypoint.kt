@@ -15,4 +15,12 @@ data class Waypoint(
     val unlockRadiusMeters: Int = 50,
     val imageUrl: String = "",
     val isUnlocked: Boolean = false
-)
+) {
+    companion object {
+        /**
+         * Prefix for waypoints created on the device when a trail is completed. These represent
+         * user progress rather than synced content, so content seeding must never delete them.
+         */
+        const val TRAIL_ID_PREFIX = "trail_"
+    }
+}
