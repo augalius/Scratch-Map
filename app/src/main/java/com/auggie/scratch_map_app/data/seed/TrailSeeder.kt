@@ -41,7 +41,9 @@ class TrailSeeder @Inject constructor(
                                 ?: return@mapNotNull null,
                             order = (cp["order"] as? Number)?.toInt() ?: index,
                             unlockRadiusMeters = (cp["unlock_radius_meters"] as? Number)?.toInt()
-                                ?: 50
+                                ?: 50,
+                            question = cp["question"] as? String ?: "",
+                            answer = cp["answer"] as? String ?: ""
                         )
                     }
 

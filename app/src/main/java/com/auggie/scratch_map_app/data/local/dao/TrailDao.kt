@@ -30,13 +30,15 @@ interface TrailDao {
         """UPDATE trail_checkpoints SET
         name = :name, description = :description,
         latitude = :latitude, longitude = :longitude,
-        checkpoint_order = :checkpointOrder, unlock_radius_meters = :unlockRadiusMeters
+        checkpoint_order = :checkpointOrder, unlock_radius_meters = :unlockRadiusMeters,
+        question = :question, answer = :answer
         WHERE id = :id"""
     )
     suspend fun updateCheckpointContent(
         id: String, name: String, description: String,
         latitude: Double, longitude: Double,
-        checkpointOrder: Int, unlockRadiusMeters: Int
+        checkpointOrder: Int, unlockRadiusMeters: Int,
+        question: String, answer: String
     )
 
     @Query("UPDATE trail_checkpoints SET is_reached = 1 WHERE id = :checkpointId")

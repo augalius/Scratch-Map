@@ -58,7 +58,9 @@ class TrailRepositoryImpl @Inject constructor(
                     latitude = cp.latitude,
                     longitude = cp.longitude,
                     checkpointOrder = cp.order,
-                    unlockRadiusMeters = cp.unlockRadiusMeters
+                    unlockRadiusMeters = cp.unlockRadiusMeters,
+                    question = cp.question,
+                    answer = cp.answer
                 )
             }
             dao.updateTrailContent(
@@ -77,7 +79,9 @@ class TrailRepositoryImpl @Inject constructor(
                     it.latitude,
                     it.longitude,
                     it.checkpointOrder,
-                    it.unlockRadiusMeters
+                    it.unlockRadiusMeters,
+                    it.question,
+                    it.answer
                 )
             }
         }

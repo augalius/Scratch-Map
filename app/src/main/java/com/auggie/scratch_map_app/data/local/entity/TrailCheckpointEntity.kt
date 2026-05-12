@@ -15,5 +15,7 @@ data class TrailCheckpointEntity(
     @ColumnInfo(name = "checkpoint_order") val checkpointOrder: Int = 0,
     @ColumnInfo(name = "unlock_radius_meters") val unlockRadiusMeters: Int = 50,
     @ColumnInfo(name = "is_reached") val isReached: Boolean = false,
+    @ColumnInfo(name = "question", defaultValue = "") val question: String = "",
+    @ColumnInfo(name = "answer", defaultValue = "") val answer: String = "",
     @ColumnInfo(name = "reached_at_millis") val reachedAtMillis: Long? = null
 )

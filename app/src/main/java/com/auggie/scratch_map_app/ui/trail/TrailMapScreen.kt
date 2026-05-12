@@ -329,7 +329,74 @@ fun TrailMapScreen(
                 )
             }
         }
+
+        // Question dialog when entering a checkpoint that has a question
+        uiState.pendingQuestionCheckpoint?.let { cp ->
+            CheckpointQuestionDialog(
+                checkpoint = cp,
+                wrongAnswer = uiState.wrongAnswer,
+                onSubmit = { viewModel.submitAnswer(it) },
+                onDismiss = { viewModel.dismissQuestion() }
+            )
+        }
     }
+}
+
+@Composable
+private fun CheckpointQuestionDialog(
+    checkpoint: TrailCheckpoint,
+    wrongAnswer: Boolean,
+    onSubmit: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var input by remember(checkpoint.id) { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.HelpOutline, null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(checkpoint.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                if (checkpoint.description.isNotBlank()) {
+                    Text(
+                        checkpoint.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(checkpoint.question, style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    placeholder = { Text("Your answer…") },
+                    isError = wrongAnswer,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    supportingText = if (wrongAnswer) {
+                        { Text("Incorrect — try again!", color = MaterialTheme.colorScheme.error) }
+                    } else null
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onSubmit(input) }, enabled = input.isNotBlank()) {
+                Text("Submit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Skip") }
+        }
+    )
 }
 
 @Composable

@@ -31,6 +31,8 @@ object TrailMapper {
             longitude = entity.longitude,
             order = entity.checkpointOrder,
             unlockRadiusMeters = entity.unlockRadiusMeters,
-            isReached = entity.isReached
+            isReached = entity.isReached,
+            question = entity.question,
+            answer = entity.answer
         )
 }

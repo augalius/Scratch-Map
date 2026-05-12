@@ -9,5 +9,7 @@ data class TrailCheckpoint(
     val longitude: Double,
     val order: Int = 0,
     val unlockRadiusMeters: Int = 50,
-    val isReached: Boolean = false
+    val isReached: Boolean = false,
+    val question: String = "",
+    val answer: String = ""
 )

@@ -26,7 +26,9 @@ data class TrailUiState(
     val currentLocation: UserLocation? = null,
     val isLoading: Boolean = true,
     val lastReachedCheckpoint: TrailCheckpoint? = null,
-    val revealedTiles: List<ScratchTile> = emptyList()
+    val revealedTiles: List<ScratchTile> = emptyList(),
+    val pendingQuestionCheckpoint: TrailCheckpoint? = null,
+    val wrongAnswer: Boolean = false
 )
 
 @HiltViewModel
@@ -84,11 +86,34 @@ class TrailViewModel @Inject constructor(
 
         if (distance <= nextCheckpoint.unlockRadiusMeters) {
             triggeredCheckpoints.add(nextCheckpoint.id)
-            completeCheckpoint(nextCheckpoint)
+            if (nextCheckpoint.question.isBlank()) {
+                completeCheckpoint(nextCheckpoint)
+            } else {
+                _uiState.update {
+                    it.copy(
+                        pendingQuestionCheckpoint = nextCheckpoint,
+                        wrongAnswer = false
+                    )
+                }
+            }
         }
     }
 
+    fun submitAnswer(userAnswer: String) {
+        val cp = _uiState.value.pendingQuestionCheckpoint ?: return
+        if (userAnswer.trim().equals(cp.answer.trim(), ignoreCase = true)) {
+            _uiState.update { it.copy(pendingQuestionCheckpoint = null, wrongAnswer = false) }
+            completeCheckpoint(cp)
+        } else {
+            triggeredCheckpoints.remove(cp.id)
+            _uiState.update { it.copy(wrongAnswer = true) }
+        }
+    }
 
+    fun dismissQuestion() {
+        val cp = _uiState.value.pendingQuestionCheckpoint ?: return
+        _uiState.update { it.copy(pendingQuestionCheckpoint = null, wrongAnswer = false) }
+    }
 
 
     private fun completeCheckpoint(checkpoint: TrailCheckpoint) {
