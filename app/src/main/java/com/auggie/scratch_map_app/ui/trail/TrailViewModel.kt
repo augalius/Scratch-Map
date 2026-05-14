@@ -79,6 +79,9 @@ class TrailViewModel @Inject constructor(
             .minByOrNull { it.order }
             ?: return
 
+        // Re-open dialog if user re-enters range of a pending checkpoint
+        if (nextCheckpoint.isPendingAnswer) triggeredCheckpoints.remove(nextCheckpoint.id)
+
         val distance = TileCalculator.haversineDistance(
             location.latitude, location.longitude,
             nextCheckpoint.latitude, nextCheckpoint.longitude
@@ -112,9 +115,16 @@ class TrailViewModel @Inject constructor(
 
     fun dismissQuestion() {
         val cp = _uiState.value.pendingQuestionCheckpoint ?: return
+        viewModelScope.launch { trailRepository.markCheckpointPending(cp.id) }
         _uiState.update { it.copy(pendingQuestionCheckpoint = null, wrongAnswer = false) }
     }
 
+    fun onCheckpointTapped(checkpointId: String) {
+        val cp = _uiState.value.trail?.checkpoints?.find { it.id == checkpointId } ?: return
+        if (!cp.isPendingAnswer || cp.isReached) return
+        triggeredCheckpoints.add(cp.id)
+        _uiState.update { it.copy(pendingQuestionCheckpoint = cp, wrongAnswer = false) }
+    }
 
     private fun completeCheckpoint(checkpoint: TrailCheckpoint) {
         viewModelScope.launch {

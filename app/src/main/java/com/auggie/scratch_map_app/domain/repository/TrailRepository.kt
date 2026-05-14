@@ -8,6 +8,7 @@ interface TrailRepository {
     fun observeTrail(trailId: String): Flow<Trail?>
     suspend fun insertTrails(trails: List<Trail>)
     suspend fun markCheckpointReached(checkpointId: String)
+    suspend fun markCheckpointPending(checkpointId: String)
     suspend fun markAllCheckpointsReached(trailId: String)
     suspend fun markTrailCompleted(trailId: String)
     suspend fun deleteNotIn(ids: List<String>)

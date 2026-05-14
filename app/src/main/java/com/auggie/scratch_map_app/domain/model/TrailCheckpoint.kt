@@ -11,5 +11,6 @@ data class TrailCheckpoint(
     val unlockRadiusMeters: Int = 50,
     val isReached: Boolean = false,
     val question: String = "",
-    val answer: String = ""
+    val answer: String = "",
+    val isPendingAnswer: Boolean = false
 )

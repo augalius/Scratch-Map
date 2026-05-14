@@ -33,6 +33,7 @@ object TrailMapper {
             unlockRadiusMeters = entity.unlockRadiusMeters,
             isReached = entity.isReached,
             question = entity.question,
-            answer = entity.answer
+            answer = entity.answer,
+            isPendingAnswer = entity.isPendingAnswer
         )
 }

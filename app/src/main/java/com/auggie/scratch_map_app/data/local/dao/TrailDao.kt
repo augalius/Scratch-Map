@@ -41,6 +41,12 @@ interface TrailDao {
         question: String, answer: String
     )
 
+    @Query("UPDATE trail_checkpoints SET is_pending_answer = 1 WHERE id = :id")
+    suspend fun markCheckpointPending(id: String)
+
+    @Query("UPDATE trail_checkpoints SET is_pending_answer = 0 WHERE id = :id")
+    suspend fun clearCheckpointPending(id: String)
+
     @Query("UPDATE trail_checkpoints SET is_reached = 1 WHERE id = :checkpointId")
     suspend fun markCheckpointReached(checkpointId: String)
 

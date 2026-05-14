@@ -28,7 +28,7 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         TrailCheckpointEntity::class,
         AchievementUnlockEntity::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = true
 )
 
@@ -144,6 +144,12 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO trail_checkpoints_new SELECT id, trail_id, name, description, latitude, longitude, checkpoint_order, unlock_radius_meters, is_reached, reached_at_millis FROM trail_checkpoints")
                 db.execSQL("DROP TABLE trail_checkpoints")
                 db.execSQL("ALTER TABLE trail_checkpoints_new RENAME TO trail_checkpoints")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE trail_checkpoints ADD COLUMN is_pending_answer INTEGER NOT NULL DEFAULT 0")
             }
         }
 

@@ -56,6 +56,10 @@ import com.mapbox.maps.extension.style.sources.addSource
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource
 import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
 import com.mapbox.maps.extension.style.sources.getSourceAs
+import com.mapbox.maps.RenderedQueryGeometry
+import com.mapbox.maps.RenderedQueryOptions
+import com.mapbox.maps.ScreenCoordinate
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -183,6 +187,28 @@ fun TrailMapScreen(
                             setupTrailLayers(style)
                             styleLoaded = true
                             fadeInWhenStyled()
+                        }
+                        mapboxMap.addOnMapClickListener { point ->
+                            val screen = mapboxMap.pixelForCoordinate(point)
+                            val geometry =
+                                RenderedQueryGeometry(ScreenCoordinate(screen.x, screen.y))
+                            mapboxMap.queryRenderedFeatures(
+                                geometry,
+                                RenderedQueryOptions(
+                                    listOf(
+                                        "trail-cp-pending",
+                                        "trail-cp-unreached",
+                                        "trail-cp-reached"
+                                    ), null
+                                )
+                            ) { result ->
+                                val feature =
+                                    result.value?.firstOrNull() ?: return@queryRenderedFeatures
+                                val cpId = feature.queriedFeature.feature.getStringProperty("id")
+                                    ?: return@queryRenderedFeatures
+                                viewModel.onCheckpointTapped(cpId)
+                            }
+                            false
                         }
                         applyScratchMapChrome(locationEnabled = true)
                         mapViewRef = this
@@ -457,10 +483,18 @@ private fun setupTrailLayers(style: Style) {
         })
 
         style.addLayer(circleLayer("trail-cp-unreached", "trail-checkpoints-source") {
-            filter(Expression.fromRaw("""["==", ["get", "reached"], false]"""))
+            filter(Expression.fromRaw("""["all", ["==", ["get", "reached"], false], ["==", ["get", "pending"], false]]"""))
             circleRadius(14.0)
             circleColor("#607D8B")
             circleStrokeWidth(2.5)
+            circleStrokeColor("#FFFFFF")
+        })
+
+        style.addLayer(circleLayer("trail-cp-pending", "trail-checkpoints-source") {
+            filter(Expression.fromRaw("""["==", ["get", "pending"], true]"""))
+            circleRadius(16.0)
+            circleColor("#FFA000")
+            circleStrokeWidth(3.0)
             circleStrokeColor("#FFFFFF")
         })
 
@@ -529,6 +563,7 @@ private fun updateCheckpointSource(style: Style, checkpoints: List<TrailCheckpoi
             addStringProperty("name", cp.name)
             addStringProperty("order", (cp.order + 1).toString())
             addBooleanProperty("reached", cp.isReached)
+            addBooleanProperty("pending", cp.isPendingAnswer && !cp.isReached)
         }
     }
     try {

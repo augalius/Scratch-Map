@@ -88,9 +88,13 @@ class TrailRepositoryImpl @Inject constructor(
     }
 
     override suspend fun markCheckpointReached(checkpointId: String) {
+        dao.clearCheckpointPending(checkpointId)
         dao.markCheckpointReached(checkpointId)
     }
 
+    override suspend fun markCheckpointPending(checkpointId: String) {
+        dao.markCheckpointPending(checkpointId)
+    }
 
     override suspend fun markAllCheckpointsReached(trailId: String) {
         dao.markAllCheckpointsReached(trailId)
