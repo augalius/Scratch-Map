@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.R
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
+import com.auggie.scratch_map_app.domain.usecase.CheckTrailProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.CheckWaypointProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.di.ApplicationScope
@@ -46,6 +47,9 @@ class LocationTrackingService : LifecycleService() {
 
     @Inject
     lateinit var checkWaypointProximityUseCase: CheckWaypointProximityUseCase
+
+    @Inject
+    lateinit var checkTrailProximityUseCase: CheckTrailProximityUseCase
 
     @Inject
     lateinit var statusTracker: ServiceStatusTracker
@@ -174,7 +178,11 @@ class LocationTrackingService : LifecycleService() {
                 statusTracker.onWaypointUnlocked(waypoint)
             }
 
-            if (unlocked.isNotEmpty()) {
+            // Check trail proximity and unlock nearby trails
+            val unlockedTrails = checkTrailProximityUseCase(location)
+            for (trail in unlockedTrails) statusTracker.onTrailUnlocked(trail)
+
+            if (unlocked.isNotEmpty() || unlockedTrails.isNotEmpty()) {
                 vibrate()
             }
 

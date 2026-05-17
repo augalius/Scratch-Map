@@ -140,6 +140,7 @@ object FogLayerManager {
                 addStringProperty("name", trail.name)
                 addStringProperty("difficulty", trail.difficulty.name)
                 addNumberProperty("progress", trail.progress)
+                addBooleanProperty("is_unlocked", trail.isUnlocked)
                 addBooleanProperty("is_completed", trail.isCompleted)
             }
         }

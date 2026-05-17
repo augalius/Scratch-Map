@@ -26,6 +26,7 @@ class TrailSeeder @Inject constructor(
                         TrailDifficulty.valueOf(doc.getString("difficulty") ?: "EASY")
                     }.getOrDefault(TrailDifficulty.EASY)
                     val distanceKm = doc.getDouble("estimated_distance_km") ?: 0.0
+                    val unlockRadius = (doc.getLong("unlock_radius_meters") ?: 100L).toInt()
 
                     @Suppress("UNCHECKED_CAST")
                     val rawCheckpoints =
@@ -53,7 +54,8 @@ class TrailSeeder @Inject constructor(
                         description = description,
                         difficulty = difficulty,
                         estimatedDistanceKm = distanceKm,
-                        checkpoints = checkpoints
+                        checkpoints = checkpoints,
+                        unlockRadiusMeters = unlockRadius
                     )
                 }.onFailure { Timber.w(it, "TrailSeeder: failed to parse trail %s", doc.id) }
                     .getOrNull()

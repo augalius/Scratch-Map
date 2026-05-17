@@ -112,6 +112,12 @@ class MapViewModel @Inject constructor(
                 _uiState.update { it.copy(lastUnlockedWaypoint = waypoint) }
             }
         }
+        viewModelScope.launch {
+            serviceStatusTracker.lastUnlockedTrail.filterNotNull().collect { trail ->
+                _uiState.update { it.copy(selectedTrail = trail) }
+                serviceStatusTracker.clearLastUnlockedTrail()
+            }
+        }
     }
 
     fun clearUnlockedWaypoint() {

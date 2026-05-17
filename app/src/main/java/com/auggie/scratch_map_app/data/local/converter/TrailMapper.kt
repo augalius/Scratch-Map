@@ -18,7 +18,9 @@ object TrailMapper {
             ),
             estimatedDistanceKm = entity.estimatedDistanceKm,
             checkpoints = checkpoints.map { checkpointEntityToDomain(it) },
-            isCompleted = entity.isCompleted
+            isCompleted = entity.isCompleted,
+            isUnlocked = entity.isUnlocked,
+            unlockRadiusMeters = entity.unlockRadiusMeters
         )
 
     private fun checkpointEntityToDomain(entity: TrailCheckpointEntity): TrailCheckpoint =

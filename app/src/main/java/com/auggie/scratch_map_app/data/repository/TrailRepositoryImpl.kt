@@ -36,7 +36,14 @@ class TrailRepositoryImpl @Inject constructor(
             TrailMapper.entityToDomain(entity, checkpoints)
         }
 
+    override suspend fun getLockedTrails(): List<Trail> =
+        dao.getLockedTrails().map { entity ->
+            TrailMapper.entityToDomain(entity, dao.getCheckpoints(entity.id))
+        }
 
+    override suspend fun markTrailUnlocked(trailId: String) {
+        dao.markTrailUnlocked(trailId)
+    }
 
     override suspend fun insertTrails(trails: List<Trail>) {
         trails.forEach { trail ->
@@ -46,7 +53,8 @@ class TrailRepositoryImpl @Inject constructor(
                     name = trail.name,
                     description = trail.description,
                     difficulty = trail.difficulty.name,
-                    estimatedDistanceKm = trail.estimatedDistanceKm
+                    estimatedDistanceKm = trail.estimatedDistanceKm,
+                    unlockRadiusMeters = trail.unlockRadiusMeters
                 )
             )
             val entities = trail.checkpoints.map { cp ->
@@ -68,7 +76,8 @@ class TrailRepositoryImpl @Inject constructor(
                 trail.name,
                 trail.description,
                 trail.difficulty.name,
-                trail.estimatedDistanceKm.toFloat()
+                trail.estimatedDistanceKm.toFloat(),
+                trail.unlockRadiusMeters
             )
             dao.insertCheckpoints(entities)
             entities.forEach {

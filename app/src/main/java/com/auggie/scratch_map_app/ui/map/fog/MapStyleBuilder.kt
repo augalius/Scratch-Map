@@ -230,10 +230,24 @@ internal object MapStyleBuilder {
               }
             },
             {
+              "id": "trail-locked",
+              "type": "symbol",
+              "source": "trail-source",
+              "filter": ["all", ["==", ["get", "is_unlocked"], false], ["==", ["get", "is_completed"], false]],
+              "minzoom": 11,
+              "layout": {
+                "icon-image": "waypoint-locked-TRAIL",
+                "icon-size": 0.75,
+                "icon-anchor": "bottom",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true
+              }
+            },
+            {
               "id": "trail-active",
               "type": "symbol",
               "source": "trail-source",
-              "filter": ["==", ["get", "is_completed"], false],
+              "filter": ["all", ["==", ["get", "is_unlocked"], true], ["==", ["get", "is_completed"], false]],
               "minzoom": 11,
               "layout": {
                 "icon-image": "waypoint-trail-active",

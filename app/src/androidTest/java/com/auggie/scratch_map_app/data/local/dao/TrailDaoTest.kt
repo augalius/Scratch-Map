@@ -61,8 +61,31 @@ class TrailDaoTest {
         assertEquals("Gediminas Hill Trail", result!!.name)
     }
 
+    @Test
+    fun newTrails_areLockedByDefault() = runTest {
+        dao.insertTrail(trailA)
+        val locked = dao.getLockedTrails()
+        assertEquals(1, locked.size)
+        assertFalse(locked[0].isUnlocked)
+    }
 
+    @Test
+    fun markTrailUnlocked_removesFromLockedList() = runTest {
+        dao.insertTrail(trailA)
+        dao.insertTrail(trailB)
+        dao.markTrailUnlocked("trail_a")
+        val locked = dao.getLockedTrails()
+        assertEquals(1, locked.size)
+        assertEquals("trail_b", locked[0].id)
+    }
 
+    @Test
+    fun markTrailUnlocked_setsIsUnlockedTrue() = runTest {
+        dao.insertTrail(trailA)
+        dao.markTrailUnlocked("trail_a")
+        val result = dao.getById("trail_a")
+        assertTrue(result!!.isUnlocked)
+    }
 
     @Test
     fun markTrailCompleted_setsIsCompletedTrue() = runTest {
@@ -144,4 +167,8 @@ class TrailDaoTest {
         assertNull(dao.getById("nonexistent"))
     }
 
+    @Test
+    fun emptyDatabase_returnsEmptyLockedList() = runTest {
+        assertTrue(dao.getLockedTrails().isEmpty())
+    }
 }

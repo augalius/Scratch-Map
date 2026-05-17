@@ -40,6 +40,7 @@ class CompleteTrailUseCase @Inject constructor(
                     longitude = lng,
                     description = trail.description,
                     category = WaypointCategory.TRAIL,
+                    unlockRadiusMeters = trail.unlockRadiusMeters,
                     isUnlocked = true
                 )
             )

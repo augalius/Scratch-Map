@@ -182,6 +182,7 @@ class FirestoreSyncService @Inject constructor(
         val docs = firestore.collection("users").document(uid)
             .collection("trails").get().await()
         docs.documents.forEach { doc ->
+            trailRepository.markTrailUnlocked(doc.id)
             trailRepository.markAllCheckpointsReached(doc.id)
             trailRepository.markTrailCompleted(doc.id)
         }

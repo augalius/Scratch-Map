@@ -11,5 +11,7 @@ data class TrailEntity(
     @ColumnInfo(name = "description") val description: String = "",
     @ColumnInfo(name = "difficulty") val difficulty: String = "EASY",
     @ColumnInfo(name = "estimated_distance_km") val estimatedDistanceKm: Double = 0.0,
-    @ColumnInfo(name = "is_completed") val isCompleted: Boolean = false
+    @ColumnInfo(name = "is_completed") val isCompleted: Boolean = false,
+    @ColumnInfo(name = "is_unlocked", defaultValue = "0") val isUnlocked: Boolean = false,
+    @ColumnInfo(name = "unlock_radius_meters", defaultValue = "100") val unlockRadiusMeters: Int = 100
 )

@@ -7,7 +7,9 @@ data class Trail(
     val difficulty: TrailDifficulty = TrailDifficulty.EASY,
     val estimatedDistanceKm: Double = 0.0,
     val checkpoints: List<TrailCheckpoint> = emptyList(),
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val isUnlocked: Boolean = false,
+    val unlockRadiusMeters: Int = 100
 ) {
     /** Trailhead. Resolved once per instance — callers always read latitude and longitude together. */
     val start: TrailCheckpoint? = checkpoints.minByOrNull { it.order }

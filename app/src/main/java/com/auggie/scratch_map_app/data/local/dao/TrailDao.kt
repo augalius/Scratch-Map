@@ -14,6 +14,12 @@ interface TrailDao {
     @Query("SELECT * FROM trails WHERE id = :id")
     suspend fun getById(id: String): TrailEntity?
 
+    @Query("SELECT * FROM trails WHERE is_unlocked = 0")
+    suspend fun getLockedTrails(): List<TrailEntity>
+
+    @Query("UPDATE trails SET is_unlocked = 1 WHERE id = :id")
+    suspend fun markTrailUnlocked(id: String)
+
     @Query("SELECT * FROM trail_checkpoints WHERE trail_id = :trailId ORDER BY checkpoint_order")
     fun observeCheckpoints(trailId: String): Flow<List<TrailCheckpointEntity>>
 
@@ -50,13 +56,14 @@ interface TrailDao {
     @Query("UPDATE trail_checkpoints SET is_reached = 1 WHERE id = :checkpointId")
     suspend fun markCheckpointReached(checkpointId: String)
 
-    @Query("UPDATE trails SET name = :name, description = :description, difficulty = :difficulty, estimated_distance_km = :distanceKm WHERE id = :id")
+    @Query("UPDATE trails SET name = :name, description = :description, difficulty = :difficulty, estimated_distance_km = :distanceKm, unlock_radius_meters = :unlockRadius WHERE id = :id")
     suspend fun updateTrailContent(
         id: String,
         name: String,
         description: String,
         difficulty: String,
-        distanceKm: Float
+        distanceKm: Float,
+        unlockRadius: Int
     )
 
     @Query("UPDATE trail_checkpoints SET is_reached = 1 WHERE trail_id = :trailId")
