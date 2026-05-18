@@ -1,6 +1,8 @@
 package com.auggie.scratch_map_app.domain.usecase
 
+import com.auggie.scratch_map_app.domain.model.DirectionalRadii
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.repository.RoadGeometryRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -11,6 +13,7 @@ import org.mockito.kotlin.*
 class RevealTilesUseCaseTest {
 
     private lateinit var tileRepository: ScratchTileRepository
+    private lateinit var roadGeometry: RoadGeometryRepository
     private lateinit var useCase: RevealTilesUseCase
 
     private val accurateLocation = UserLocation(
@@ -23,10 +26,13 @@ class RevealTilesUseCaseTest {
     @Before
     fun setUp() {
         tileRepository = mock()
-        useCase = RevealTilesUseCase(tileRepository)
+        roadGeometry = mock()
+        useCase = RevealTilesUseCase(tileRepository, roadGeometry)
     }
 
-    private suspend fun stubReveal(revealed: Int) {
+    private suspend fun stubRadii(revealed: Int) {
+        whenever(roadGeometry.getDirectionalRadii(any(), any()))
+            .thenReturn(DirectionalRadii.uniform(50))
         whenever(tileRepository.revealTiles(any())).thenReturn(revealed)
     }
 
@@ -36,33 +42,47 @@ class RevealTilesUseCaseTest {
     }
 
     @Test
+    fun `inaccurate location never queries road geometry`() = runTest {
+        useCase(inaccurateLocation)
+        verifyNoInteractions(roadGeometry)
+    }
+
+    @Test
     fun `inaccurate location never calls tile repository`() = runTest {
         useCase(inaccurateLocation)
         verifyNoInteractions(tileRepository)
     }
 
     @Test
+    fun `accurate location queries road geometry at that position`() = runTest {
+        stubRadii(revealed = 0)
+        useCase(accurateLocation)
+        verify(roadGeometry)
+            .getDirectionalRadii(accurateLocation.latitude, accurateLocation.longitude)
+    }
+
+    @Test
     fun `accurate location reveals tiles`() = runTest {
-        stubReveal(revealed = 5)
+        stubRadii(revealed = 5)
         useCase(accurateLocation)
         verify(tileRepository).revealTiles(any())
     }
 
     @Test
     fun `returns count from tile repository`() = runTest {
-        stubReveal(revealed = 7)
+        stubRadii(revealed = 7)
         assertEquals(7, useCase(accurateLocation))
     }
 
     @Test
     fun `returns 0 when repository reveals no new tiles`() = runTest {
-        stubReveal(revealed = 0)
+        stubRadii(revealed = 0)
         assertEquals(0, useCase(accurateLocation))
     }
 
     @Test
     fun `location exactly at the accuracy threshold is accepted`() = runTest {
-        stubReveal(revealed = 1)
+        stubRadii(revealed = 1)
         assertEquals(1, useCase(accurateLocation.copy(accuracy = 50f)))
     }
 }

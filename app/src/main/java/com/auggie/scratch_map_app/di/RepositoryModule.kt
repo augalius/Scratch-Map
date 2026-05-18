@@ -3,6 +3,7 @@ package com.auggie.scratch_map_app.di
 import com.auggie.scratch_map_app.data.remote.FirestoreSyncService
 import com.auggie.scratch_map_app.data.repository.AuthRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.ContentVersionRepositoryImpl
+import com.auggie.scratch_map_app.data.repository.RoadGeometryRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.ScratchTileRepositoryImpl
 import com.auggie.scratch_map_app.data.seed.AchievementSeeder
 import com.auggie.scratch_map_app.data.seed.RegionSeeder
@@ -11,6 +12,7 @@ import com.auggie.scratch_map_app.data.seed.WaypointSeeder
 import com.auggie.scratch_map_app.domain.repository.AchievementContentSource
 import com.auggie.scratch_map_app.domain.repository.ContentVersionRepository
 import com.auggie.scratch_map_app.domain.repository.RegionContentSource
+import com.auggie.scratch_map_app.domain.repository.RoadGeometryRepository
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.data.remote.FirestoreAccountStatusRepository
@@ -60,6 +62,9 @@ abstract class RepositoryModule {
     abstract fun bindAccountStatusRepository(
         impl: FirestoreAccountStatusRepository
     ): AccountStatusRepository
+
+    @Binds @Singleton
+    abstract fun bindRoadGeometryRepository(impl: RoadGeometryRepositoryImpl): RoadGeometryRepository
 
     @Binds @Singleton
     abstract fun bindContentVersionRepository(

@@ -1,7 +1,7 @@
 package com.auggie.scratch_map_app.domain.usecase
 
-import com.auggie.scratch_map_app.domain.model.DirectionalRadii
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.repository.RoadGeometryRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
 import com.auggie.scratch_map_app.util.TileCalculator
 import timber.log.Timber
@@ -10,7 +10,8 @@ import javax.inject.Singleton
 
 @Singleton
 class RevealTilesUseCase @Inject constructor(
-    private val tileRepository: ScratchTileRepository
+    private val tileRepository: ScratchTileRepository,
+    private val roadGeometryRepository: RoadGeometryRepository
 ) {
     suspend operator fun invoke(location: UserLocation): Int {
         if (!location.isSufficientlyAccurate(ACCURACY_THRESHOLD_METERS)) {
@@ -21,7 +22,8 @@ class RevealTilesUseCase @Inject constructor(
             return 0
         }
 
-        val radii = DirectionalRadii.uniform(REVEAL_RADIUS_METERS)
+        val radii =
+            roadGeometryRepository.getDirectionalRadii(location.latitude, location.longitude)
 
         val tiles = TileCalculator.createTilesDirectional(
             lat = location.latitude,
@@ -44,6 +46,5 @@ class RevealTilesUseCase @Inject constructor(
 
     private companion object {
         const val ACCURACY_THRESHOLD_METERS = 50f
-        const val REVEAL_RADIUS_METERS = 60
     }
 }
