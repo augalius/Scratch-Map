@@ -14,6 +14,7 @@ import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.auggie.scratch_map_app.BuildConfig
 import com.auggie.scratch_map_app.R
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
@@ -22,6 +23,7 @@ import com.auggie.scratch_map_app.domain.usecase.CheckWaypointProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.RevealTilesUseCase
 import com.auggie.scratch_map_app.di.ApplicationScope
 import com.auggie.scratch_map_app.domain.location.LocationClient
+import com.auggie.scratch_map_app.util.LocationLogger
 import com.auggie.scratch_map_app.util.TileCalculator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -165,6 +167,8 @@ class LocationTrackingService : LifecycleService() {
 
     private suspend fun processLocation(location: UserLocation) {
         try {
+            if (BuildConfig.DEBUG) LocationLogger.log(this, location)
+
             val newTiles = revealTilesUseCase(location)
             totalNewTiles += newTiles
 
