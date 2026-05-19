@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.auggie.scratch_map_app.ui.auth.AuthScreen
 import com.auggie.scratch_map_app.ui.auth.AuthViewModel
 import com.auggie.scratch_map_app.ui.map.MapScreen
+import com.auggie.scratch_map_app.ui.onboarding.OnboardingScreen
 import com.auggie.scratch_map_app.ui.settings.SettingsScreen
 import com.auggie.scratch_map_app.ui.stats.RegionDetailScreen
 import com.auggie.scratch_map_app.ui.stats.StatsScreen
@@ -23,6 +24,7 @@ import com.auggie.scratch_map_app.ui.trail.TrailMapScreen
 fun ScratchMapNavHost(
     navController: NavHostController,
     startDestination: String = Screen.Auth.route,
+    isFirstLaunch: Boolean = false,
     modifier: Modifier = Modifier,
     onBottomBarVisibilityChanged: (Boolean) -> Unit = {}
 ) {
@@ -32,7 +34,8 @@ fun ScratchMapNavHost(
     LaunchedEffect(authState.user) {
         val currentRoute = navController.currentDestination?.route
         if (authState.user != null && currentRoute == Screen.Auth.route) {
-            navController.navigate(Screen.Map.route) { popUpTo(Screen.Auth.route) { inclusive = true } }
+            val destination = if (isFirstLaunch) Screen.Onboarding.route else Screen.Map.route
+            navController.navigate(destination) { popUpTo(Screen.Auth.route) { inclusive = true } }
         } else if (authState.user == null && currentRoute != Screen.Auth.route) {
             navController.navigate(Screen.Auth.route) {
                 popUpTo(0) { inclusive = true }
@@ -47,6 +50,13 @@ fun ScratchMapNavHost(
     ) {
         composable(Screen.Auth.route) { AuthScreen(authViewModel) }
 
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(onComplete = {
+                navController.navigate(Screen.Map.route) {
+                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                }
+            })
+        }
         composable(Screen.Map.route) {
             MapScreen(onTrailStart = { trailId ->
                 navController.navigate(Screen.Trail.route(trailId))

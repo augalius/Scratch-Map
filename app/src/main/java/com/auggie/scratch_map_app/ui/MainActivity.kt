@@ -1,5 +1,6 @@
 package com.auggie.scratch_map_app.ui
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isFirstLaunch = isFirstLaunch()
         val isLoggedIn = authRepository.currentUser != null
         setContent {
             ScratchMapTheme {
@@ -83,12 +85,18 @@ class MainActivity : ComponentActivity() {
                     }
                     AccountSuspendedScreen(onSignOut = { scope.launch { authRepository.logout() } })
                 } else {
-                    ScratchMapMainScreen(isLoggedIn = isLoggedIn)
+                    ScratchMapMainScreen(isFirstLaunch = isFirstLaunch, isLoggedIn = isLoggedIn)
                 }
             }
         }
     }
 
+    private fun isFirstLaunch(): Boolean {
+        val prefs = getSharedPreferences("scratch_map_app", Context.MODE_PRIVATE)
+        val first = prefs.getBoolean("is_first_launch", true)
+        if (first) prefs.edit().putBoolean("is_first_launch", false).apply()
+        return first
+    }
 }
 
 private data class NavItem(
@@ -99,7 +107,7 @@ private data class NavItem(
 )
 
 @Composable
-private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
+private fun ScratchMapMainScreen(isFirstLaunch: Boolean, isLoggedIn: Boolean) {
     val navController = rememberNavController()
     val items = remember {
         listOf(
@@ -109,7 +117,11 @@ private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
         )
     }
 
-    val startDestination = if (isLoggedIn) Screen.Map.route else Screen.Auth.route
+    val startDestination = when {
+        isLoggedIn && isFirstLaunch -> Screen.Onboarding.route
+        isLoggedIn -> Screen.Map.route
+        else -> Screen.Auth.route
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -140,6 +152,7 @@ private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
             ScratchMapNavHost(
                 navController = navController,
                 startDestination = startDestination,
+                isFirstLaunch = isFirstLaunch,
                 modifier = Modifier.fillMaxSize(),
                 onBottomBarVisibilityChanged = { bottomBarScrollVisible = it }
             )
