@@ -10,7 +10,6 @@ import com.auggie.scratch_map_app.data.local.dao.ScratchTileDao
 import com.auggie.scratch_map_app.data.local.dao.TrailDao
 import com.auggie.scratch_map_app.data.local.dao.WaypointDao
 import com.auggie.scratch_map_app.data.local.entity.AchievementDefinitionEntity
-import com.auggie.scratch_map_app.data.local.entity.AchievementUnlockEntity
 import com.auggie.scratch_map_app.data.local.entity.RegionEntity
 import com.auggie.scratch_map_app.data.local.entity.ScratchTileEntity
 import com.auggie.scratch_map_app.data.local.entity.TrailCheckpointEntity
@@ -25,10 +24,9 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         RegionEntity::class,
         AchievementDefinitionEntity::class,
         TrailEntity::class,
-        TrailCheckpointEntity::class,
-        AchievementUnlockEntity::class
+        TrailCheckpointEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 
@@ -144,6 +142,12 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO trail_checkpoints_new SELECT id, trail_id, name, description, latitude, longitude, checkpoint_order, unlock_radius_meters, is_reached, reached_at_millis FROM trail_checkpoints")
                 db.execSQL("DROP TABLE trail_checkpoints")
                 db.execSQL("ALTER TABLE trail_checkpoints_new RENAME TO trail_checkpoints")
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS achievement_unlocks")
             }
         }
 

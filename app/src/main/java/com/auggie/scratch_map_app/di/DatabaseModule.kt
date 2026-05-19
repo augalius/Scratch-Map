@@ -38,7 +38,8 @@ object DatabaseModule {
                 ScratchMapDatabase.MIGRATION_11_12,
                 ScratchMapDatabase.MIGRATION_12_13,
                 ScratchMapDatabase.MIGRATION_13_14,
-                ScratchMapDatabase.MIGRATION_14_15
+                ScratchMapDatabase.MIGRATION_14_15,
+                ScratchMapDatabase.MIGRATION_15_16
             )
             // No 1→2 migration exists, so v1 installs are recreated from scratch. Everything
             // from v2 onward migrates in place via the chain above.
