@@ -18,6 +18,7 @@ import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.data.remote.FirestoreAccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.TrailContentSource
 import com.auggie.scratch_map_app.domain.repository.WaypointContentSource
+import com.auggie.scratch_map_app.data.repository.SettingsRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.AchievementRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.RegionRepositoryImpl
 import com.auggie.scratch_map_app.data.repository.TrailRepositoryImpl
@@ -26,6 +27,7 @@ import com.auggie.scratch_map_app.domain.repository.AuthRepository
 import com.auggie.scratch_map_app.domain.repository.AchievementRepository
 import com.auggie.scratch_map_app.domain.repository.RegionRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
+import com.auggie.scratch_map_app.domain.repository.SettingsRepository
 import com.auggie.scratch_map_app.domain.repository.TrailRepository
 import com.auggie.scratch_map_app.domain.repository.WaypointRepository
 import dagger.Binds
@@ -39,6 +41,9 @@ import javax.inject.Singleton
 abstract class RepositoryModule {
     @Binds @Singleton
     abstract fun bindScratchTileRepository(impl: ScratchTileRepositoryImpl): ScratchTileRepository
+
+    @Binds @Singleton
+    abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
 
     @Binds @Singleton
     abstract fun bindWaypointRepository(impl: WaypointRepositoryImpl): WaypointRepository

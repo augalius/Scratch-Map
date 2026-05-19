@@ -1,5 +1,6 @@
 package com.auggie.scratch_map_app.domain.usecase
 
+import com.auggie.scratch_map_app.domain.model.TrackingDefaults
 import com.auggie.scratch_map_app.domain.model.UserLocation
 import com.auggie.scratch_map_app.domain.repository.RoadGeometryRepository
 import com.auggie.scratch_map_app.domain.repository.ScratchTileRepository
@@ -14,10 +15,10 @@ class RevealTilesUseCase @Inject constructor(
     private val roadGeometryRepository: RoadGeometryRepository
 ) {
     suspend operator fun invoke(location: UserLocation): Int {
-        if (!location.isSufficientlyAccurate(ACCURACY_THRESHOLD_METERS)) {
+        if (!location.isSufficientlyAccurate(TrackingDefaults.ACCURACY_THRESHOLD_METERS)) {
             Timber.d(
                 "Location rejected: accuracy %.1fm > threshold %.1fm",
-                location.accuracy, ACCURACY_THRESHOLD_METERS
+                location.accuracy, TrackingDefaults.ACCURACY_THRESHOLD_METERS
             )
             return 0
         }
@@ -42,9 +43,5 @@ class RevealTilesUseCase @Inject constructor(
             )
         }
         return newCount
-    }
-
-    private companion object {
-        const val ACCURACY_THRESHOLD_METERS = 50f
     }
 }

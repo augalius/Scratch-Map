@@ -4,6 +4,7 @@ sealed class Screen(val route: String) {
     data object Auth : Screen("auth")
     data object Map : Screen("map")
     data object Stats : Screen("stats")
+    data object Settings : Screen("settings")
     data object RegionDetail : Screen("region/{regionId}") {
         fun route(regionId: String) = "region/$regionId"
     }
@@ -12,3 +13,4 @@ sealed class Screen(val route: String) {
         fun route(trailId: String) = "trail/$trailId"
     }
 }
+

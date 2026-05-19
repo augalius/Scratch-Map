@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.auggie.scratch_map_app.domain.repository.SettingsRepository
+import com.auggie.scratch_map_app.service.LocationTrackingService
+import kotlinx.coroutines.launch
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -11,27 +15,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.auggie.scratch_map_app.domain.repository.AccountStatusRepository
 import com.auggie.scratch_map_app.domain.repository.AuthRepository
-import com.auggie.scratch_map_app.service.LocationTrackingService
 import com.auggie.scratch_map_app.ui.auth.AccountSuspendedScreen
 import com.auggie.scratch_map_app.ui.navigation.Screen
 import com.auggie.scratch_map_app.ui.navigation.ScratchMapNavHost
 import com.auggie.scratch_map_app.ui.theme.ScratchMapTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -40,7 +44,30 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var authRepository: AuthRepository
     @Inject
+    lateinit var settingsRepository: SettingsRepository
+    @Inject
     lateinit var accountStatusRepository: AccountStatusRepository
+
+    private var stoppedForBackground = false
+
+    override fun onStop() {
+        super.onStop()
+        lifecycleScope.launch {
+            val settings = settingsRepository.getSettings()
+            if (!settings.isTrackingEnabled && LocationTrackingService.isRunning) {
+                LocationTrackingService.stop(this@MainActivity)
+                stoppedForBackground = true
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (stoppedForBackground) {
+            stoppedForBackground = false
+            LocationTrackingService.start(this)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +88,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
 
 private data class NavItem(
@@ -76,7 +104,8 @@ private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
     val items = remember {
         listOf(
             NavItem(Screen.Map, "Map", Icons.Filled.Explore, Icons.Outlined.Explore),
-            NavItem(Screen.Stats, "Stats", Icons.Filled.Insights, Icons.Outlined.Insights)
+            NavItem(Screen.Stats, "Stats", Icons.Filled.Insights, Icons.Outlined.Insights),
+            NavItem(Screen.Settings, "Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
         )
     }
 
@@ -85,7 +114,7 @@ private fun ScratchMapMainScreen(isLoggedIn: Boolean) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in listOf(
-        Screen.Map.route, Screen.Stats.route, Screen.RegionDetail.route
+        Screen.Map.route, Screen.Stats.route, Screen.Settings.route, Screen.RegionDetail.route
     )
 
     var bottomBarScrollVisible by remember { mutableStateOf(true) }

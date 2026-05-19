@@ -16,7 +16,9 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.auggie.scratch_map_app.BuildConfig
 import com.auggie.scratch_map_app.R
+import com.auggie.scratch_map_app.domain.model.TrackingDefaults
 import com.auggie.scratch_map_app.domain.model.UserLocation
+import com.auggie.scratch_map_app.domain.repository.SettingsRepository
 import com.auggie.scratch_map_app.domain.repository.SyncRepository
 import com.auggie.scratch_map_app.domain.usecase.CheckTrailProximityUseCase
 import com.auggie.scratch_map_app.domain.usecase.CheckWaypointProximityUseCase
@@ -54,6 +56,9 @@ class LocationTrackingService : LifecycleService() {
     lateinit var checkTrailProximityUseCase: CheckTrailProximityUseCase
 
     @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
     lateinit var statusTracker: ServiceStatusTracker
 
     @Inject
@@ -76,7 +81,6 @@ class LocationTrackingService : LifecycleService() {
         const val ACTION_START = "com.scratchmap.action.START_TRACKING"
         const val ACTION_STOP = "com.scratchmap.action.STOP_TRACKING"
         private const val WAKELOCK_TAG = "ScratchMap::LocationTracking"
-        private const val INTERVAL_MS = 5_000L
 
         var isRunning: Boolean = false
             private set
@@ -141,7 +145,7 @@ class LocationTrackingService : LifecycleService() {
 
         locationJob = lifecycleScope.launch {
             locationClient.getLocationUpdates(
-                intervalMs = INTERVAL_MS,
+                intervalMs = TrackingDefaults.INTERVAL_MS,
                 minDistanceMeters = 5f
             )
                 .onEach { location -> processLocation(location) }
@@ -186,7 +190,9 @@ class LocationTrackingService : LifecycleService() {
             val unlockedTrails = checkTrailProximityUseCase(location)
             for (trail in unlockedTrails) statusTracker.onTrailUnlocked(trail)
 
-            if (unlocked.isNotEmpty() || unlockedTrails.isNotEmpty()) {
+            if ((unlocked.isNotEmpty() || unlockedTrails.isNotEmpty()) &&
+                settingsRepository.getSettings().vibrateOnDiscovery
+            ) {
                 vibrate()
             }
 

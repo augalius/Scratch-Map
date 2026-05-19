@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.coroutines.play.services)
     implementation(libs.play.services.location)
+    implementation(libs.datastore.preferences)
     implementation(libs.timber)
     implementation(libs.coil.compose)
     implementation(platform(libs.firebase.bom))

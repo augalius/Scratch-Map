@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.auggie.scratch_map_app.ui.auth.AuthScreen
 import com.auggie.scratch_map_app.ui.auth.AuthViewModel
 import com.auggie.scratch_map_app.ui.map.MapScreen
+import com.auggie.scratch_map_app.ui.settings.SettingsScreen
 import com.auggie.scratch_map_app.ui.stats.RegionDetailScreen
 import com.auggie.scratch_map_app.ui.stats.StatsScreen
 import com.auggie.scratch_map_app.ui.trail.TrailMapScreen
@@ -56,6 +57,7 @@ fun ScratchMapNavHost(
                 navController.navigate(Screen.RegionDetail.route(regionId))
             })
         }
+        composable(Screen.Settings.route) { SettingsScreen() }
         composable(
             route = Screen.RegionDetail.route,
             arguments = listOf(navArgument("regionId") { type = NavType.StringType })
