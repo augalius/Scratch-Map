@@ -26,7 +26,7 @@ import com.auggie.scratch_map_app.data.local.entity.WaypointEntity
         TrailEntity::class,
         TrailCheckpointEntity::class
     ],
-    version = 16,
+    version = 19,
     exportSchema = true
 )
 
@@ -142,6 +142,82 @@ abstract class ScratchMapDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO trail_checkpoints_new SELECT id, trail_id, name, description, latitude, longitude, checkpoint_order, unlock_radius_meters, is_reached, reached_at_millis FROM trail_checkpoints")
                 db.execSQL("DROP TABLE trail_checkpoints")
                 db.execSQL("ALTER TABLE trail_checkpoints_new RENAME TO trail_checkpoints")
+            }
+        }
+
+        val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS trail_checkpoints_new (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        trail_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL DEFAULT '',
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        checkpoint_order INTEGER NOT NULL DEFAULT 0,
+                        unlock_radius_meters INTEGER NOT NULL DEFAULT 50,
+                        is_reached INTEGER NOT NULL DEFAULT 0,
+                        question TEXT NOT NULL DEFAULT '',
+                        answer TEXT NOT NULL DEFAULT '',
+                        is_pending_answer INTEGER NOT NULL DEFAULT 0
+                    )
+                """
+                )
+                db.execSQL("INSERT OR IGNORE INTO trail_checkpoints_new SELECT id, trail_id, name, description, latitude, longitude, checkpoint_order, unlock_radius_meters, is_reached, question, answer, is_pending_answer FROM trail_checkpoints")
+                db.execSQL("DROP TABLE trail_checkpoints")
+                db.execSQL("ALTER TABLE trail_checkpoints_new RENAME TO trail_checkpoints")
+            }
+        }
+
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS waypoints_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        string_id TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        description TEXT NOT NULL DEFAULT '',
+                        category TEXT NOT NULL DEFAULT 'OTHER',
+                        unlock_radius_meters INTEGER NOT NULL DEFAULT 200,
+                        image_url TEXT NOT NULL DEFAULT '',
+                        is_unlocked INTEGER NOT NULL DEFAULT 0
+                    )
+                """
+                )
+                db.execSQL("INSERT OR IGNORE INTO waypoints_new SELECT id, string_id, name, latitude, longitude, description, category, unlock_radius_meters, image_url, is_unlocked FROM waypoints")
+                db.execSQL("DROP TABLE waypoints")
+                db.execSQL("ALTER TABLE waypoints_new RENAME TO waypoints")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_waypoints_string_id ON waypoints (string_id)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_latitude_longitude ON waypoints (latitude, longitude)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_category ON waypoints (category)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_waypoints_is_unlocked ON waypoints (is_unlocked)")
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS scratch_tiles_new (
+                        tile_x INTEGER NOT NULL,
+                        tile_y INTEGER NOT NULL,
+                        zoom_level INTEGER NOT NULL,
+                        center_lat REAL NOT NULL,
+                        center_lng REAL NOT NULL,
+                        synced_to_cloud INTEGER NOT NULL DEFAULT 0,
+                        PRIMARY KEY (tile_x, tile_y, zoom_level)
+                    )
+                """
+                )
+                db.execSQL("INSERT OR IGNORE INTO scratch_tiles_new SELECT tile_x, tile_y, zoom_level, center_lat, center_lng, synced_to_cloud FROM scratch_tiles")
+                db.execSQL("DROP TABLE scratch_tiles")
+                db.execSQL("ALTER TABLE scratch_tiles_new RENAME TO scratch_tiles")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_scratch_tiles_center_lat_center_lng ON scratch_tiles (center_lat, center_lng)")
             }
         }
 

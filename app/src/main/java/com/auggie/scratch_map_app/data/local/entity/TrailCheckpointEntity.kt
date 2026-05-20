@@ -17,6 +17,5 @@ data class TrailCheckpointEntity(
     @ColumnInfo(name = "is_reached") val isReached: Boolean = false,
     @ColumnInfo(name = "question", defaultValue = "") val question: String = "",
     @ColumnInfo(name = "answer", defaultValue = "") val answer: String = "",
-    @ColumnInfo(name = "is_pending_answer", defaultValue = "0") val isPendingAnswer: Boolean = false,
-    @ColumnInfo(name = "reached_at_millis") val reachedAtMillis: Long? = null
+    @ColumnInfo(name = "is_pending_answer", defaultValue = "0") val isPendingAnswer: Boolean = false
 )

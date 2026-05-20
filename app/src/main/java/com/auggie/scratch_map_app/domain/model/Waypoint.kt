@@ -12,7 +12,7 @@ data class Waypoint(
     val longitude: Double,
     val description: String = "",
     val category: WaypointCategory = WaypointCategory.OTHER,
-    val unlockRadiusMeters: Int = 50,
+    val unlockRadiusMeters: Int = 200,
     val imageUrl: String = "",
     val isUnlocked: Boolean = false
 ) {
