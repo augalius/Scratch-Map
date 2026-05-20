@@ -2,6 +2,7 @@ package com.auggie.scratch_map_app.di
 
 import android.content.Context
 import androidx.room.Room
+import com.auggie.scratch_map_app.data.local.DatabasePassphraseProvider
 import com.auggie.scratch_map_app.data.local.ScratchMapDatabase
 import com.auggie.scratch_map_app.data.local.dao.AchievementDefinitionDao
 import com.auggie.scratch_map_app.data.local.dao.RegionDao
@@ -13,6 +14,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.sqlcipher.database.SupportFactory
 import javax.inject.Singleton
 
 @Module
@@ -22,9 +24,12 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        passphraseProvider: DatabasePassphraseProvider
     ): ScratchMapDatabase {
+        val factory = SupportFactory(passphraseProvider.getOrCreate())
         return Room.databaseBuilder(context, ScratchMapDatabase::class.java, "scratchmap.db")
+            .openHelperFactory(factory)
             .addMigrations(
                 ScratchMapDatabase.MIGRATION_2_3,
                 ScratchMapDatabase.MIGRATION_3_4,

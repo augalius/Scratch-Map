@@ -86,6 +86,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.config)
     implementation(libs.mapbox.maps)
+    implementation(libs.sqlcipher)
+    implementation(libs.security.crypto)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.kotlin)
